@@ -109,7 +109,7 @@ jobs:
           run: |
            echo "### modifying targetRevision ###"
            yq e '.spec.sources[1].targetRevision="${{ steps.extract_branch.outputs.branch }}"' -i sites/${{ env.BRANCH }}/edge/app.yaml
-           yq eval '.metadata.name = "edge-clusters-${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/edge/app.yaml
+           yq eval '.metadata.name = "clusters-${{ env.BRANCH }}-edge-clusters"' -i sites/${{ env.BRANCH }}/edge/app.yaml
            yq eval '.spec.destination.namespace = "${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/edge/app.yaml
            yq eval '.spec.sources[0].helm.valueFiles[0] = "$values/${{ env.BRANCH }}/edge/values.yaml"' -i sites/${{ env.BRANCH }}/edge/app.yaml
 
@@ -118,7 +118,7 @@ jobs:
            
            
            yq e '.spec.sources[1].targetRevision="${{ steps.extract_branch.outputs.branch }}"' -i sites/${{ env.BRANCH }}/region/app.yaml
-           yq eval '.metadata.name = "region-clusters-${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/region/app.yaml
+           yq eval '.metadata.name = "clusters-${{ env.BRANCH }}-region-clusters"' -i sites/${{ env.BRANCH }}/region/app.yaml
            yq eval '.spec.destination.namespace = "${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/region/app.yaml
            yq eval '.spec.sources[0].helm.valueFiles[0] = "$values/${{ env.BRANCH }}/region/values.yaml"' -i sites/${{ env.BRANCH }}/region/app.yaml
 
@@ -126,7 +126,7 @@ jobs:
            yq eval '.name = "${{ env.BRANCH }}-region"' -i sites/${{ env.BRANCH }}/region/helm-region-chart/Chart.yaml
            
            yq e '.spec.sources[1].targetRevision="${{ steps.extract_branch.outputs.branch }}"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
-           yq eval '.metadata.name = "wavelength-clusters-${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
+           yq eval '.metadata.name = "clusters-${{ env.BRANCH }}-wavelength-clusters"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
            yq eval '.spec.destination.namespace = "${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
            yq eval '.spec.sources[0].helm.valueFiles[0] = "$values/${{ env.BRANCH }}/wavelength/values.yaml"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
 
