@@ -1,0 +1,168 @@
+name: post deploy cluster
+on:
+  workflow_call:
+    secrets:
+      ACCESS_TOKEN:
+        required: true
+      OPS_AWS_ACCESS_KEY_ID:
+        required: true
+      OPS_AWS_SECRET_ACCESS_KEY:
+        required: true
+      OPS_AWS_REGION:
+          required: true
+      SSH_PUB_KEY:
+          required: true
+      SSH_PRIV_KEY:
+        required: true
+
+jobs:
+    terragrunt:
+        name: terragrunt
+        runs-on: self-hosted
+        env:
+          tf_version: 'latest'
+          tg_version: 'latest'
+        steps:
+#        - name: Installing dependencies
+#          run: |  
+#           echo "### install yq ###"
+#           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+#           sudo chmod a+x /usr/local/bin/yq
+#           yq --version
+
+#        - name: pulling 5gplustactile/provisioning repo
+#          uses: actions/checkout@v3
+#          with:
+#            repository: '5gplustactile/provisioning'
+#            ref: main
+#            fetch-depth: 0
+#            token: ${{ secrets.ACCESS_TOKEN }}
+
+        # extract branch name
+        - name: Extract branch name
+          shell: bash
+          run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          id: extract_branch
+
+        - name: Get branch name
+          run: echo 'The branch name is' ${{ steps.extract_branch.outputs.branch }}
+
+        - name: Getting variable branch
+          run: |
+           echo "BRANCH=$(echo ${{ steps.extract_branch.outputs.branch }} | cut -d/ -f2)" >> $GITHUB_ENV
+
+#        - name: name clusters - edge
+#          env:
+#            ENVIRON: edge
+#          run: |
+#           FILE=./${{ env.BRANCH }}/${{ env.ENVIRON }}/values.yaml
+#           OUTPUT_FILE=/tmp/clusters-${{ env.ENVIRON }}.output#
+
+#           if [ -f "$FILE" ]; then
+#            echo "$FILE exists."
+#            for c in $(yq e '.clusters[].name' $FILE)
+#            do
+#              echo "${{ env.BRANCH }}-${{ env.ENVIRON }}-$c" | tee -a $OUTPUT_FILE
+#            done
+#            # Check if OUTPUT_FILE contains the string "null"
+#            if [ -f "$OUTPUT_FILE" ]; then
+#              echo "the file $OUTPUT_FILE exist"
+#              if grep -q "^null$" $OUTPUT_FILE; then
+#                echo "setting file_edge_is_null = true"
+#                echo "file_edge_is_null=true" >> $GITHUB_ENV
+#              else
+#                echo "setting file_edge_is_null = false"
+#                echo "file_edge_is_null=false" >> $GITHUB_ENV
+#              fi
+#            else
+#              echo "setting file_edge_is_null = true"
+#              echo "file_edge_is_null=true" >> $GITHUB_ENV
+#              exit 0;
+#            fi           
+#           else
+#            echo "$FILE does not exist."
+#            exit 1;
+#           fi     
+
+        - name: Configure AWS Credentials - edge
+#          if: env.file_edge_is_null == 'false'
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.OPS_AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.OPS_AWS_SECRET_ACCESS_KEY }}
+            aws-region: "${{ secrets.OPS_AWS_REGION }}"                                
+
+        # Install the latest version of Terragrunt CLI and configure the Terragrunt CLI configuration file with a Terragrunt Cloud user API token
+        - name: Setup Terraform ${{ env.tf_version }} - edge
+#          if: env.file_edge_is_null == 'false'
+          uses: hashicorp/setup-terraform@v1
+          with:
+            terraform_version: ${{ env.tf_version }}
+            terraform_wrapper: false           
+
+        - name: Setup Terraform wrapper path - edge
+#          if: env.file_edge_is_null == 'false'
+          run: |
+            which terraform
+            terraform --version        
+
+        - name: Setup Terragrunt version ${{ env.tg_version }} - edge
+#          if: env.file_edge_is_null == 'false'
+          uses: autero1/action-terragrunt@v1.3.2
+          with:
+            terragrunt_version: ${{ env.tg_version }}
+            token: ${{ secrets.ACCESS_TOKEN }}          
+
+        - name: Setup Terragrunt version - edge
+#          if: env.file_edge_is_null == 'false'
+          run: |
+            which terragrunt
+            terragrunt --version            
+
+        - name: pulling 5gplustactile/iac-terragrunt repo
+#          if: env.file_edge_is_null == 'false'
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/iac-terragrunt'
+            ref: main
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: ssh github
+#          if: env.file_edge_is_null == 'false'
+          run: |
+            ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -q -N ""
+            echo ${{ secrets.SSH_PUB_KEY }} | base64 -d > ~/.ssh/id_rsa.pub
+            echo ${{ secrets.SSH_PRIV_KEY }} | base64 -d > ~/.ssh/id_rsa
+            ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+            ssh -T git@github.com  || true
+
+        - name: 'Terragrunt init ${{ env.BRANCH }} - eni-lni - edge'
+#          if: env.file_edge_is_null == 'false'
+          env:
+            GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          run: |
+            # change that to run-all before init flag
+            terragrunt init -lock=false --terragrunt-non-interactive --terragrunt-source-update --terragrunt-include-external-dependencies
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/eni-lni
+
+        - name: 'Terragrunt validate ${{ env.BRANCH }} - eni-lni - edge'
+#          if: env.file_edge_is_null == 'false'
+          run: |
+            # change that to run-all before init flag
+            terragrunt validate --terragrunt-non-interactive --terragrunt-source-update --terragrunt-include-external-dependencies
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/eni-lni                   
+
+        - name: 'Terragrunt plan ${{ env.BRANCH }} - eni-lni - edge'
+#          if: env.file_edge_is_null == 'false' 
+          run: |
+            # change that to run-all before init flag
+            terragrunt plan -lock=false --terragrunt-non-interactive --terragrunt-source-update --terragrunt-include-external-dependencies
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/eni-lni       
+
+        - name: 'Terragrunt apply ${{ env.BRANCH }} - eni-lni - edge'
+#          if: env.file_edge_is_null == 'false'
+          run: |
+            # change that to run-all before init flag
+            terragrunt apply -auto-approve -lock=false --terragrunt-non-interactive --terragrunt-include-external-dependencies
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/eni-lni

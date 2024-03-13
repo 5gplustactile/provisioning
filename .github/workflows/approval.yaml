@@ -1,0 +1,14 @@
+name: wofkflow_merge
+on:
+    pull_request:
+        branches:
+          - main
+
+jobs:
+    cluster:
+        if: github.event.review.state == 'approved'
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-approval.yaml@dt/telefonica
+        secrets:
+            ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+            ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
+            ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}

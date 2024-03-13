@@ -1,0 +1,573 @@
+name: installing addons
+on:
+  workflow_call:
+    secrets:
+        ACCESS_TOKEN:
+          required: true
+        ARGOCD_HOSTNAME:
+          required: true
+        ARGOCD_PASSWORD:
+          required: true
+        GIT_REPO:
+          required: true
+        KUBECONFIG_MASTER:
+          required: true
+
+jobs:
+    install:
+        name: install
+        runs-on: self-hosted
+        steps:
+          - name: Installing dependencies
+            env:
+              GIT_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+              GIT_REPO: ${{ secrets.GIT_REPO }}
+            run: |  
+             echo "### install yq ###"
+             sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+             sudo chmod a+x /usr/local/bin/yq
+             yq --version
+             
+             echo "## install gh ###"
+             type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+             && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+             && sudo apt update \
+             && sudo apt install gh -y
+             
+             echo "### argocd-autopilot ###"
+             # get the latest version or change to a specific version
+             VERSION=$(curl --silent "https://api.github.com/repos/argoproj-labs/argocd-autopilot/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+             # download and extract the binary
+             curl -L --output - https://github.com/argoproj-labs/argocd-autopilot/releases/download/$VERSION/argocd-autopilot-linux-amd64.tar.gz | tar zx
+             # move the binary to your $PATH
+             sudo mv ./argocd-autopilot-* /usr/local/bin/argocd-autopilot
+             # check the installation
+             argocd-autopilot version
+             
+             echo "### argocd ###"
+             # download
+             curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+             # install
+             sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+             # delete package
+             rm argocd-linux-amd64
+  
+             echo "### clusterctl ###"
+             curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.5.1/clusterctl-linux-amd64 -o clusterctl
+             sudo install -o root -g root -m 0755 clusterctl /usr/local/bin/clusterctl
+             rm -rf clusterctl
+             clusterctl version
+             
+             echo "### install kubectl ###"
+             curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+             chmod +x kubectl
+             sudo mv kubectl /usr/local/bin
+             kubectl version --output=yaml
+  
+             echo "### envsubst ###"
+             sudo apt-get install gettext-base -y
+             envsubst --version
+  
+          - name: pulling 5gplustactile/provisioning repo
+            uses: actions/checkout@v3
+            with:
+              repository: '5gplustactile/provisioning'
+              fetch-depth: 0
+              token: ${{ secrets.ACCESS_TOKEN }}
+  
+          - name: Get branch name
+            id: get_branch
+            run: |
+              if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+                echo "::set-output name=branch::${{ github.event.pull_request.head.ref }}"
+              else
+                echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
+              fi
+    
+          - name: Use branch name
+            run: |
+              BRANCH_NAME=${{ steps.get_branch.outputs.branch }}
+              echo "BRANCH_DT=$(echo $BRANCH_NAME | cut -d/ -f2)" >> $GITHUB_ENV
+  
+          - name: Get branch name
+            run: |
+              echo 'The branch name is' ${{ env.BRANCH_DT }}
+  
+#          - name: checking connection cluster management
+#            run: |
+#             echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+#             kubectl get nodes --kubeconfig ~/mgmt.kubeconfig
+  
+          - name: name clusters - region
+            env:
+              ENVIRON: region
+            run: |
+             FILE=./${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values.yaml
+             OUTPUT_FILE=/tmp/clusters-${{ env.ENVIRON }}.output
+  
+             if [ -f "$FILE" ]; then
+              echo "$FILE exists."
+              for c in $(yq e '.clusters[].name' $FILE)
+              do
+                echo "${{ env.BRANCH_DT }}-${{ env.ENVIRON }}-$c" | tee -a $OUTPUT_FILE
+                cat $OUTPUT_FILE
+              done
+              # Check if OUTPUT_FILE contains the string "null"
+              if [ -f "$OUTPUT_FILE" ]; then
+                echo "the file $OUTPUT_FILE exist"
+                if grep -q "^null$" $OUTPUT_FILE; then
+                  echo "setting file_region_is_null = true"
+                  echo "file_region_is_null=true" >> $GITHUB_ENV
+                else
+                  echo "setting file_region_is_null = false"
+                  echo "file_region_is_null=false" >> $GITHUB_ENV
+                fi
+              else
+                echo "setting file_region_is_null = true"
+                echo "file_region_is_null=true" >> $GITHUB_ENV
+                exit 0;
+              fi           
+              else
+               echo "$FILE does not exist."
+               exit 1;
+              fi        
+
+          - name: name clusters - edge
+            env:
+              ENVIRON: edge
+            run: |
+             FILE=./${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values.yaml
+             OUTPUT_FILE=/tmp/clusters-${{ env.ENVIRON }}.output
+  
+             if [ -f "$FILE" ]; then
+              echo "$FILE exists."
+              for c in $(yq e '.clusters[].name' $FILE)
+              do
+                echo "${{ env.BRANCH_DT }}-${{ env.ENVIRON }}-$c" | tee -a $OUTPUT_FILE
+              done
+              # Check if OUTPUT_FILE contains the string "null"
+              if [ -f "$OUTPUT_FILE" ]; then
+                echo "the file $OUTPUT_FILE exist"
+                if grep -q "^null$" $OUTPUT_FILE; then
+                  echo "setting file_edge_is_null = true"
+                  echo "file_edge_is_null=true" >> $GITHUB_ENV
+                else
+                  echo "setting file_edge_is_null = false"
+                  echo "file_edge_is_null=false" >> $GITHUB_ENV
+                fi
+              else
+                echo "setting file_edge_is_null = true"
+                echo "file_edge_is_null=true" >> $GITHUB_ENV
+                exit 0;
+              fi           
+             else
+              echo "$FILE does not exist."
+              exit 1;
+             fi     
+             
+          - name: name clusters - wavelength
+            env:
+              ENVIRON: wavelength
+            run: |
+             FILE=./${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values.yaml
+             OUTPUT_FILE=/tmp/clusters-${{ env.ENVIRON }}.output
+  
+             if [ -f "$FILE" ]; then
+              echo "$FILE exists."
+              for c in $(yq e '.clusters[].name' $FILE)
+              do
+                echo "${{ env.BRANCH_DT }}-${{ env.ENVIRON }}-$c" | tee -a $OUTPUT_FILE
+              done
+              # Check if OUTPUT_FILE contains the string "null"
+              if [ -f "$OUTPUT_FILE" ]; then
+                echo "the file $OUTPUT_FILE exist"
+                if grep -q "^null$" $OUTPUT_FILE; then
+                  echo "setting file_wavelength_is_null = true"
+                  echo "file_wavelength_is_null=true" >> $GITHUB_ENV
+                else
+                  echo "setting file_wavelength_is_null = false"
+                  echo "file_wavelength_is_null=false" >> $GITHUB_ENV
+                fi
+              else
+                echo "setting file_wavelength_is_null = true"
+                echo "file_wavelength_is_null=true" >> $GITHUB_ENV
+                exit 0;
+              fi            
+             else
+              echo "$FILE does not exist."
+              exit 1;
+             fi  
+
+          - name: Upload clusters-region.output
+            if: env.file_region_is_null == 'false'
+            uses: actions/upload-artifact@v2
+            env:
+              ENVIRON: region
+            with:
+              name: clusters-${{ env.ENVIRON }}
+              path: /tmp/clusters-${{ env.ENVIRON }}.output
+
+          - name: Upload clusters-edge.output
+            if: env.file_edge_is_null == 'false'
+            uses: actions/upload-artifact@v2
+            env:
+              ENVIRON: edge
+            with:
+              name: clusters-${{ env.ENVIRON }}
+              path: /tmp/clusters-${{ env.ENVIRON }}.output
+
+          - name: Upload clusters-wavelength.output
+            if: env.file_wavelength_is_null == 'false'
+            uses: actions/upload-artifact@v2
+            env:
+              ENVIRON: wavelength
+            with:
+              name: clusters-${{ env.ENVIRON }}
+              path: /tmp/clusters-${{ env.ENVIRON }}.output
+
+          - name: pulling 5gplustactile/auto-ztp repo main branch
+            uses: actions/checkout@v3
+            with:
+              repository: '5gplustactile/auto-ztp '
+              ref: main
+              fetch-depth: 0
+              token: ${{ secrets.ACCESS_TOKEN }}
+  
+          - name: Download clusters-region.output
+            if: env.file_region_is_null == 'false'
+            uses: actions/download-artifact@v2
+            env:
+              ENVIRON: region
+            with:
+              name: clusters-${{ env.ENVIRON }}
+
+          - name: Download clusters-edge.output
+            if: env.file_edge_is_null == 'false'
+            uses: actions/download-artifact@v2
+            env:
+              ENVIRON: edge
+            with:
+              name: clusters-${{ env.ENVIRON }}
+
+          - name: Download clusters-wavelength.output
+            if: env.file_wavelength_is_null == 'false'
+            uses: actions/download-artifact@v2
+            env:
+              ENVIRON: wavelength
+            with:
+              name: clusters-${{ env.ENVIRON }}
+  
+          - name: cat clusters-region.output
+            if: env.file_region_is_null == 'false'
+            env:
+              ENVIRON: region
+            run: |
+              cat clusters-${{ env.ENVIRON }}.output
+
+          - name: cat clusters-edge.output
+            if: env.file_edge_is_null == 'false'
+            env:
+              ENVIRON: edge
+            run: |
+              cat clusters-${{ env.ENVIRON }}.output
+
+          - name: cat clusters-wavelength.output
+            if: env.file_wavelength_is_null == 'false'
+            env:
+              ENVIRON: wavelength
+            run: |
+              cat clusters-${{ env.ENVIRON }}.output
+
+          - name: install calico cni - region
+            if: env.file_region_is_null == 'false'
+            env:
+              ENVIRON: region
+            run: |
+             echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+             FILE=clusters-${{ env.ENVIRON }}.output
+             if [ -f "$FILE" ]; then
+                if [ -s "$FILE" ]; then
+                  echo "The file $FILE is not empty."                
+                  for c in $(cat clusters-${{ env.ENVIRON }}.output)
+                  do
+                     clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                 
+                     kubectl apply -f templates/cluster-addons/cni/calico.yaml --kubeconfig ~/$c.kubeconfig
+                     if kubectl taint nodes --all node.cluster.x-k8s.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
+                        echo "tain node.cluster.x-k8s.io deleted"
+                     else
+                       echo "skipping - tain node.cluster.x-k8s.io deleted"
+                       continue
+                     fi
+                     if kubectl taint nodes --all node.cloudprovider.kubernetes.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
+                        echo "tain node.cloudprovider.kubernetes.io deleted"
+                     else
+                        echo "skipping - tain node.cloudprovider.kubernetes.io deleted"
+                        continue
+                     fi
+                     kubectl get nodes --kubeconfig=~/$c.kubeconfig
+                   done
+                else
+                  echo "The file $FILE is empty."
+                fi
+              else
+                echo "The file $FILE does not exist."
+              fi
+
+          - name: install calico cni - edge
+            if: env.file_edge_is_null == 'false'
+            env:
+              ENVIRON: edge
+            run: |
+             echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+             FILE=clusters-${{ env.ENVIRON }}.output
+             if [ -f "$FILE" ]; then
+                if [ -s "$FILE" ]; then
+                  echo "The file $FILE is not empty."                
+                  for c in $(cat clusters-${{ env.ENVIRON }}.output)
+                  do
+                     clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                 
+                     kubectl apply -f templates/cluster-addons/cni/calico.yaml --kubeconfig ~/$c.kubeconfig
+                     if kubectl taint nodes --all node.cluster.x-k8s.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
+                        echo "tain node.cluster.x-k8s.io deleted"
+                     else
+                       echo "skipping - tain node.cluster.x-k8s.io deleted"
+                       continue
+                     fi
+                     if kubectl taint nodes --all node.cloudprovider.kubernetes.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
+                        echo "tain node.cloudprovider.kubernetes.io deleted"
+                     else
+                        echo "skipping - tain node.cloudprovider.kubernetes.io deleted"
+                        continue
+                     fi
+                     kubectl get nodes --kubeconfig=~/$c.kubeconfig
+                   done
+                else
+                  echo "The file $FILE is empty."
+                fi
+              else
+                echo "The file $FILE does not exist."
+              fi
+
+
+          - name: install calico cni - wavelength
+            if: env.file_wavelength_is_null == 'false'
+            env:
+              ENVIRON: wavelength
+            run: |
+             echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+             FILE=clusters-${{ env.ENVIRON }}.output
+             if [ -f "$FILE" ]; then
+                if [ -s "$FILE" ]; then
+                  echo "The file $FILE is not empty."                
+                  for c in $(cat clusters-${{ env.ENVIRON }}.output)
+                  do
+                     clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                 
+                     kubectl apply -f templates/cluster-addons/cni/calico.yaml --kubeconfig ~/$c.kubeconfig
+                     if kubectl taint nodes --all node.cluster.x-k8s.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
+                        echo "tain node.cluster.x-k8s.io deleted"
+                     else
+                       echo "skipping - tain node.cluster.x-k8s.io deleted"
+                       continue
+                     fi
+                     if kubectl taint nodes --all node.cloudprovider.kubernetes.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
+                        echo "tain node.cloudprovider.kubernetes.io deleted"
+                     else
+                        echo "skipping - tain node.cloudprovider.kubernetes.io deleted"
+                        continue
+                     fi
+                     kubectl get nodes --kubeconfig=~/$c.kubeconfig
+                   done
+                else
+                  echo "The file $FILE is empty."
+                fi
+              else
+                echo "The file $FILE does not exist."
+              fi
+              
+
+          - name: Setting up cluster-addons - region
+            if: env.file_region_is_null == 'false'
+            env:
+              ENVIRON: region
+            run: |
+             echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+             FILE=clusters-${{ env.ENVIRON }}.output
+             if [ -f "$FILE" ]; then
+                if [ -s "$FILE" ]; then
+                  echo "The file $FILE is not empty."
+
+                  for c in $(cat clusters-${{ env.ENVIRON }}.output)
+                  do
+                   clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                    export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$c.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                    echo "ENDPOINT=$ENDPOINT"
+                    argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure || true
+                   
+                    echo "### install pip dependencies ###"
+                    pip install -r templates/cluster-addons/requirements.txt
+
+                    echo "### add cluster server $ENDPOINT ###"
+                    python templates/cluster-addons/python-addons.py --operation add \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/helm-cluster-addons/values.yaml \
+                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+
+                    kubectl apply -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons.yaml --kubeconfig ~/mgmt.kubeconfig
+
+                    kubectl config rename-context $c-admin@$c $c --kubeconfig ~/$c.kubeconfig
+     
+                    export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
+                    #kubectl config view --flatten
+                    kubectl config view --flatten > ~/.kube/config
+                    kubectl config get-contexts
+                   
+                    if argocd cluster add $c -y --upsert; then
+                       echo "cluster added in argocd"
+                    else
+                       echo "cluster could not be added in argocd" 
+                       exit 1;
+                    fi 
+     
+                    #echo "### install cert-manager ###"
+                    #CLUSTER_URL=$ENDPOINT NAME_CLUSTER=$c PROJECT=${{ env.BRANCH_DT }} envsubst < templates/cluster-addons/security/cert-manager.yaml > sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/$c/security/cert-manager.yaml
+                    
+                    ## config more addons using the same command above ##
+                    # ...
+     
+                  done
+                else
+                  echo "The file $FILE is empty."
+                fi
+              else
+                echo "The file $FILE does not exist."
+              fi                
+       
+
+          - name: Setting up cluster-addons - edge
+            if: env.file_edge_is_null == 'false'
+            env:
+              ENVIRON: edge
+            run: |
+             echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+             FILE=clusters-${{ env.ENVIRON }}.output
+             if [ -f "$FILE" ]; then
+                if [ -s "$FILE" ]; then
+                  echo "The file $FILE is not empty."
+
+                  for c in $(cat clusters-${{ env.ENVIRON }}.output)
+                  do
+                   clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                    export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$c.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                    echo "ENDPOINT=$ENDPOINT"
+                    argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure || true
+                    echo "### install pip dependencies ###"
+                    pip install -r templates/cluster-addons/requirements.txt
+
+                    echo "### add cluster server $ENDPOINT ###"
+                    python templates/cluster-addons/python-addons.py --operation add \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/helm-cluster-addons/values.yaml \
+                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+                    
+                    kubectl apply -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons.yaml --kubeconfig ~/mgmt.kubeconfig
+
+                    kubectl config rename-context $c-admin@$c $c --kubeconfig ~/$c.kubeconfig
+     
+                    export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
+                    #kubectl config view --flatten
+                    kubectl config view --flatten > ~/.kube/config
+                    kubectl config get-contexts
+                   
+                    if argocd cluster add $c -y --upsert; then
+                       echo "cluster added in argocd"
+                    else
+                       echo "cluster could not be added in argocd" 
+                       exit 1;
+                    fi 
+     
+                    #echo "### install cert-manager ###"
+                    #CLUSTER_URL=$ENDPOINT NAME_CLUSTER=$c PROJECT=${{ env.BRANCH_DT }} envsubst < templates/cluster-addons/security/cert-manager.yaml > sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/$c/security/cert-manager.yaml
+                    
+                    ## config more addons using the same command above ##
+                    # ...
+     
+                  done
+                else
+                  echo "The file $FILE is empty."
+                fi
+              else
+                echo "The file $FILE does not exist."
+              fi
+
+          - name: Setting up cluster-addons - wavelength
+            if: env.file_wavelength_is_null == 'false'
+            env:
+              ENVIRON: wavelength
+            run: |
+             echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+             FILE=clusters-${{ env.ENVIRON }}.output
+             if [ -f "$FILE" ]; then
+                if [ -s "$FILE" ]; then
+                  echo "The file $FILE is not empty."
+
+                  for c in $(cat clusters-${{ env.ENVIRON }}.output)
+                  do
+                   clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                    export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$c.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                    echo "ENDPOINT=$ENDPOINT"
+                    argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure || true
+                    echo "### install pip dependencies ###"
+                    pip install -r templates/cluster-addons/requirements.txt
+
+                    echo "### add cluster server $ENDPOINT ###"
+                    python templates/cluster-addons/python-addons.py --operation add \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/helm-cluster-addons/values.yaml \
+                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+                    
+                    kubectl apply -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons.yaml --kubeconfig ~/mgmt.kubeconfig
+
+                    kubectl config rename-context $c-admin@$c $c --kubeconfig ~/$c.kubeconfig
+     
+                    export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
+                    #kubectl config view --flatten
+                    kubectl config view --flatten > ~/.kube/config
+                    kubectl config get-contexts
+                   
+                    if argocd cluster add $c -y --upsert; then
+                       echo "cluster added in argocd"
+                    else
+                       echo "cluster could not be added in argocd" 
+                       exit 1;
+                    fi 
+     
+                    #echo "### install cert-manager ###"
+                    #CLUSTER_URL=$ENDPOINT NAME_CLUSTER=$c PROJECT=${{ env.BRANCH_DT }} envsubst < templates/cluster-addons/security/cert-manager.yaml > sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/$c/security/cert-manager.yaml
+                    
+                    ## config more addons using the same command above ##
+                    # ...
+     
+                  done
+                else
+                  echo "The file $FILE is empty."
+                fi
+              else
+                echo "The file $FILE does not exist."
+              fi
+
+          - name: commit changes in tactile5g-auto-ztp repository
+            if: env.file_wavelength_is_null == 'false' || env.file_region_is_null == 'false' || env.file_edge_is_null == 'false'
+            run: |
+             git config --local user.email "action@github.com"
+             git config --local user.name "GitHub Action"
+             git add .
+             git commit -a -m "creating manifiest to configure cluster addons" --allow-empty
+  
+          - name: push changes in 5gplustactile/auto-ztp repository
+            if: env.file_wavelength_is_null == 'false' || env.file_region_is_null == 'false' || env.file_edge_is_null == 'false'
+            uses: ad-m/github-push-action@master
+            with:
+              branch: main    
+              repository: '5gplustactile/auto-ztp'

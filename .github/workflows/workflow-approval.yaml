@@ -1,0 +1,83 @@
+name: approval cluster
+on:
+  workflow_call:
+    secrets:
+        ACCESS_TOKEN:
+          required: true
+        ARGOCD_HOSTNAME:
+          required: true
+        ARGOCD_PASSWORD:
+          required: true
+jobs:
+    approval:
+        name: approval
+        runs-on: self-hosted
+        env:
+          CI_COMMIT_MESSAGE: creating manifiest to create clusters
+          ARGOCD_HOSTNAME: argocd-server.argocd.svc.cluster.local
+        steps:
+        - name: Checkout
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/provisioning'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        # extract branch name
+        - name: Extract branch name
+          shell: bash
+          run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          id: extract_branch
+
+        - name: Get branch name
+          run: echo 'The branch name is' ${{ steps.extract_branch.outputs.branch }}
+
+        - name: Installing dependencies
+          run: |  
+           echo "### install yq ###"
+           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+           sudo chmod a+x /usr/local/bin/yq
+           yq --version
+
+           echo "### argocd ###"
+           # download
+           curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+           # install
+           sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+           # delete package
+           rm argocd-linux-amd64
+
+
+        - name: pulling repository 5gplustactile/auto-ztp
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/auto-ztp'
+            ref: main
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: Getting variable branch
+          run: |
+           echo "BRANCH=$(echo ${{ steps.extract_branch.outputs.branch }} | cut -d/ -f2)" >> $GITHUB_ENV
+
+        - name: name argocd app to edge, region, wavelength
+          run: |
+           echo NAME_ARGOCD_APP_EDGE=$(yq e '.metadata.name' sites/${{ env.BRANCH }}/edge/app.yaml) >> $GITHUB_ENV
+           echo NAME_ARGOCD_APP_REGION=$(yq e '.metadata.name' sites/${{ env.BRANCH }}/region/app.yaml) >> $GITHUB_ENV
+           echo NAME_ARGOCD_APP_WAVELENGTH=$(yq e '.metadata.name' sites/${{ env.BRANCH }}/wavelength/app.yaml) >> $GITHUB_ENV
+
+#        - name: argocd edge - sync
+#          run: |
+#           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
+#           echo "y" | argocd app sync ${{ env.NAME_ARGOCD_APP_EDGE }}#
+
+#        - name: argocd region - sync
+#          run: |
+#           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
+#           echo "y" | argocd app sync ${{ env.NAME_ARGOCD_APP_REGION }}
+
+#        - name: argocd wavelength - review difference against the target and live state before syncing app
+#          run: |
+#           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
+#           echo "y" | argocd app sync ${{ env.NAME_ARGOCD_APP_WAVELENGTH }}

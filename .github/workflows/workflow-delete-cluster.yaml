@@ -1,0 +1,245 @@
+name: checking if needs delete clusters
+on:
+  workflow_call:
+    secrets:
+        ACCESS_TOKEN:
+          required: true
+        ARGOCD_HOSTNAME:
+          required: true
+        ARGOCD_PASSWORD:
+          required: true
+        KUBECONFIG_MASTER:
+            required: true
+jobs:
+  inventory:
+        name: inventory
+        runs-on: self-hosted
+        env:
+          CI_COMMIT_MESSAGE: deleting cluster addons files to clusters deleted
+        steps:
+        - name: pulling repo 5gplustactile/provisioning
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/provisioning'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        # extract branch name
+        - name: Extract branch name
+          shell: bash
+          run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          id: extract_branch
+
+        - name: Get branch name
+          run: echo 'The branch name is' ${{ steps.extract_branch.outputs.branch }}
+
+        - name: Installing dependencies
+          run: |  
+           echo "### install yq ###"
+           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+           sudo chmod a+x /usr/local/bin/yq
+           yq --version
+
+           echo "### install jq ###"
+           sudo apt install jq -y
+           jq --version
+
+           echo "## install gh ###"
+           type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+           curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+           && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+           && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+           && sudo apt update \
+           && sudo apt install gh -y
+
+           # get the latest version or change to a specific version
+           VERSION=$(curl --silent "https://api.github.com/repos/argoproj-labs/argocd-autopilot/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+           # download and extract the binary
+           curl -L --output - https://github.com/argoproj-labs/argocd-autopilot/releases/download/$VERSION/argocd-autopilot-linux-amd64.tar.gz | tar zx
+           # move the binary to your $PATH
+           sudo mv ./argocd-autopilot-* /usr/local/bin/argocd-autopilot
+           # check the installation
+           argocd-autopilot version
+
+           echo "### argocd ###"
+           # download
+           curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+           # install
+           sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+           # delete package
+           rm argocd-linux-amd64
+
+           echo "### install kubectl ###"
+           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+           chmod +x kubectl
+           sudo mv kubectl /usr/local/bin
+           kubectl version --output=yaml
+
+           echo "### clusterctl ###"
+           curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.5.1/clusterctl-linux-amd64 -o clusterctl
+           sudo install -o root -g root -m 0755 clusterctl /usr/local/bin/clusterctl
+           rm -rf clusterctl
+
+        - name: Get branch name
+          id: get_branch
+          run: |
+            if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+              echo "::set-output name=branch::${{ github.event.pull_request.head.ref }}"
+            else
+              echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
+            fi
+  
+        - name: Use branch name
+          run: |
+            BRANCH_NAME=${{ steps.get_branch.outputs.branch }}
+            echo "BRANCH_DT=$(echo $BRANCH_NAME | cut -d/ -f2)" >> $GITHUB_ENV
+        - name: Get branch name
+          run: |
+            echo 'The branch name is' ${{ env.BRANCH_DT }}
+
+        - name: name clusters all regions
+          run: |
+           # Define the files with the environment variable
+           FILE_EDGE=./${{ env.BRANCH_DT }}/edge/values.yaml
+           FILE_REGION=./${{ env.BRANCH_DT }}/region/values.yaml
+           FILE_WAVELENGTH=./${{ env.BRANCH_DT }}/wavelength/values.yaml
+           
+           OUTPUT_FILE_EDGE=/tmp/clusters-edge.output
+           OUTPUT_FILE_REGION=/tmp/clusters-region.output
+           OUTPUT_FILE_WAVELENGTH=/tmp/clusters-region.output
+
+           if [ -f "$FILE_EDGE" ] && [ -f "$FILE_REGION" ] && [ -f "$FILE_WAVELENGTH" ]; then
+              echo "$FILE_EDGE, $FILE_REGION, $FILE_WAVELENGTH exists."
+              
+              for c in $(yq e '.clusters[].name' $FILE_EDGE)
+              do
+                echo "${{ env.BRANCH_DT }}-edge-$c" | tee -a $OUTPUT_FILE_EDGE
+              done
+              for c in $(yq e '.clusters[].name' $FILE_REGION)
+              do
+                echo "${{ env.BRANCH_DT }}-region-$c" | tee -a $OUTPUT_FILE_REGION
+              done
+              for c in $(yq e '.clusters[].name' $FILE_WAVELENGTH)
+              do
+                echo "${{ env.BRANCH_DT }}-wavelength-$c" | tee -a $OUTPUT_FILE_WAVELENGTH
+              done
+  
+              echo "all files required exist"
+              if [ -f "$OUTPUT_FILE_EDGE" ] && [ -f "$OUTPUT_FILE_REGION" ] && [ -f "$OUTPUT_FILE_WAVELENGTH" ]; then
+                  # cat $OUTPUT_FILE_EDGE
+                  cat $OUTPUT_FILE_EDGE
+                  # cat $OUTPUT_FILE_REGION
+                  cat $OUTPUT_FILE_REGION
+                  # cat $OUTPUT_FILE_WAVELENGTH
+                  cat $OUTPUT_FILE_WAVELENGTH
+              else
+                echo "all files not exist, creating new ones with empty content"
+                touch $OUTPUT_FILE_EDGE $OUTPUT_FILE_REGION $OUTPUT_FILE_WAVELENGTH
+              fi
+  
+              # build the inventory clusters
+              cat $OUTPUT_FILE_EDGE $OUTPUT_FILE_REGION $OUTPUT_FILE_WAVELENGTH > /tmp/inventory.output
+              echo "setting file_all_is_null = true"
+              echo "file_all_is_null=true" >> $GITHUB_ENV     
+           else
+              echo "some files do not exist."
+              exit 1;
+           fi  
+
+        - name: Upload inventory.output
+          uses: actions/upload-artifact@v2
+          with:
+            name: inventory
+            path: /tmp/inventory.output
+
+        - name: pulling repo 5gplustactile/auto-ztp
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/auto-ztp'
+            ref: main
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: Download inventory.output
+          uses: actions/download-artifact@v2
+          with:
+            name: inventory
+
+        - name: inventory clusters
+          run: |
+           mv inventory.output /tmp/inventory.output
+           # cat /tmp/inventory.output
+           cat /tmp/inventory.output 
+           echo "### login argocd ###"
+           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure
+           echo "### list cluster argocd ###"
+           argocd cluster list --grpc-web | awk 'NR>1 && $2!="in-cluster" {print $2}' | grep ${{ env.BRANCH_DT }}- > /tmp/argocd-inventory-clusters.output || true
+
+           echo "### cat /tmp/argocd-inventory-clusters.output ###"
+           cat /tmp/argocd-inventory-clusters.output
+           
+           # check if file empty
+           if [ -s /tmp/argocd-inventory-clusters.output ]; then
+              echo "ARGOCD_INVENTORY_IS_EMPTY=false"
+              echo "ARGOCD_INVENTORY_IS_EMPTY=false" >> $GITHUB_ENV
+           else
+              echo "ARGOCD_INVENTORY_IS_EMPTY=true"
+              echo "ARGOCD_INVENTORY_IS_EMPTY=true" >> $GITHUB_ENV
+           fi
+
+           IFS=$'\n'
+           for line in $(cat /tmp/argocd-inventory-clusters.output)
+           do
+             trimmed_line=$(echo "$line" | tr -d '[:space:]')
+             if grep -Fxiq "$trimmed_line" /tmp/inventory.output
+             then
+               echo "cluster $line synced in argocd and git"
+             else
+               echo "cluster $line is out of synced, exists in argocd but not in git and must be deleted from argocd"
+               echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+               
+               clusterctl get kubeconfig $line -n $line --kubeconfig ~/mgmt.kubeconfig > ~/$line.kubeconfig
+               export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$line.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+               echo "ENDPOINT=$ENDPOINT"
+               
+               echo "### install pip dependencies ###"
+               pip install -r templates/cluster-addons/requirements.txt
+
+               echo "### delete cluster server $ENDPOINT ###"
+               echo "### edge ###"
+               python templates/cluster-addons/python-addons.py --operation delete \
+               --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
+               --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+
+               echo "### region ###"
+               python templates/cluster-addons/python-addons.py --operation delete \
+               --file sites/${{ env.BRANCH_DT }}/region/addons/helm-cluster-addons/values.yaml \
+               --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+
+               echo "### wavelength ###"
+               python templates/cluster-addons/python-addons.py --operation delete \
+               --file sites/${{ env.BRANCH_DT }}/wavelength/addons/helm-cluster-addons/values.yaml \
+               --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+
+               kubectl delete cluster -n $line $line --kubeconfig ~/mgmt.kubeconfig
+               argocd cluster rm $line -y || true
+               kubectl delete ns $line --kubeconfig ~/mgmt.kubeconfig &
+               
+             fi
+           done
+           unset IFS
+   
+        - name: commit changes in 5gplustactile/auto-ztp repository
+          run: |
+           git config --local user.email "action@github.com"
+           git config --local user.name "GitHub Action"  
+           git add .
+           git commit -a -m "${{ env.CI_COMMIT_MESSAGE }}" --allow-empty
+  
+        - name: push changes in 5gplustactile/auto-ztp repository
+          uses: ad-m/github-push-action@master
+          with:
+            branch: main
+            repository: '5gplustactile/auto-ztp'
+            github_token: ${{ secrets.ACCESS_TOKEN }}

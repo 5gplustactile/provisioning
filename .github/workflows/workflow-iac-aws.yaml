@@ -1,0 +1,110 @@
+name: provisioning cluster
+on:
+  workflow_call:
+    secrets:
+      ACCESS_TOKEN:
+        required: true
+      OPS_AWS_ACCESS_KEY_ID:
+        required: true
+      OPS_AWS_SECRET_ACCESS_KEY:
+        required: true
+      OPS_AWS_REGION:
+          required: true
+      SSH_PUB_KEY:
+          required: true
+      SSH_PRIV_KEY:
+        required: true
+
+jobs:
+    terragrunt:
+        name: terragrunt
+        runs-on: self-hosted
+        env:
+          tf_version: 'latest'
+          tg_version: 'latest'
+        steps:
+        - name: Configure AWS Credentials
+          uses: aws-actions/configure-aws-credentials@v4
+          with:
+            aws-access-key-id: ${{ secrets.OPS_AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.OPS_AWS_SECRET_ACCESS_KEY }}
+            aws-region: "${{ secrets.OPS_AWS_REGION }}"            
+
+        # Install the latest version of Terragrunt CLI and configure the Terragrunt CLI configuration file with a Terragrunt Cloud user API token
+        - name: Setup Terraform ${{ env.tf_version }}
+          uses: hashicorp/setup-terraform@v1
+          with:
+            terraform_version: ${{ env.tf_version }}
+            terraform_wrapper: false
+
+        - name: Setup Terraform wrapper path
+          run: |
+            which terraform
+            terraform --version
+
+        - name: Setup Terragrunt version ${{ env.tg_version }}
+          uses: autero1/action-terragrunt@v1.3.2
+          with:
+            terragrunt_version: ${{ env.tg_version }}
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: Setup Terragrunt version
+          run: |
+            which terragrunt
+            terragrunt --version
+
+        # extract branch name
+        - name: Extract branch name
+          shell: bash
+          run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          id: extract_branch
+
+        - name: Get branch name
+          run: echo 'The branch name is' ${{ steps.extract_branch.outputs.branch }}
+
+        - name: Getting variable branch
+          run: |
+           echo "BRANCH=$(echo ${{ steps.extract_branch.outputs.branch }} | cut -d/ -f2)" >> $GITHUB_ENV
+           
+        - name: pulling 5gplustactile/iac-terragrunt repo
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/iac-terragrunt'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: ssh github
+          run: |
+            ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -q -N ""
+            echo ${{ secrets.SSH_PUB_KEY }} | base64 -d > ~/.ssh/id_rsa.pub
+            echo ${{ secrets.SSH_PRIV_KEY }} | base64 -d > ~/.ssh/id_rsa
+            ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+            ssh -T git@github.com  || true
+
+        - name: 'Terragrunt init ${{ env.BRANCH }} - subnets'
+          env:
+            GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          run: |
+            # change that to run-all before init flag
+            terragrunt init -lock=false --terragrunt-non-interactive --terragrunt-source-update --terragrunt-include-external-dependencies
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets
+
+        - name: 'Terragrunt validate ${{ env.BRANCH }} - subnets'
+          run: |
+            # change that to run-all before init flag
+            terragrunt validate --terragrunt-non-interactive --terragrunt-source-update --terragrunt-include-external-dependencies
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets          
+
+        - name: 'Terragrunt plan ${{ env.BRANCH }} - subnets'
+          run: |
+            # change that to run-all before init flag
+            terragrunt plan -lock=false --terragrunt-non-interactive --terragrunt-source-update --terragrunt-include-external-dependencies
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets
+
+        - name: 'Terragrunt apply ${{ env.BRANCH }} - subnets'
+          id: apply
+          run: |
+            # change that to run-all before init flag
+            terragrunt apply -auto-approve -lock=false --terragrunt-non-interactive --terragrunt-include-external-dependencies
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets

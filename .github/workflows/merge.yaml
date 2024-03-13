@@ -1,0 +1,41 @@
+name: wofkflow_merge
+on:
+    push:
+      branches:
+          - 'main'
+    pull_request_target:
+      types:
+        - closed
+
+jobs:
+    checking:
+        needs: iac
+        if: github.event.pull_request.merged == true
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-delete-cluster.yaml@dt/telefonica
+        secrets:
+            ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+            ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
+            ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
+            KUBECONFIG_MASTER: ${{ secrets.KUBECONFIG_MASTER }}
+
+    iac:
+        if: github.event.pull_request.merged == true
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-post-deploy.yaml@dt/telefonica
+        secrets:
+            ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+            OPS_AWS_ACCESS_KEY_ID: ${{ secrets.OPS_AWS_ACCESS_KEY_ID }}
+            OPS_AWS_SECRET_ACCESS_KEY: ${{ secrets.OPS_AWS_SECRET_ACCESS_KEY }}
+            OPS_AWS_REGION: ${{ secrets.OPS_AWS_REGION }}
+            SSH_PUB_KEY: ${{ secrets.SSH_PUB_KEY }}
+            SSH_PRIV_KEY: ${{ secrets.SSH_PRIV_KEY }}            
+
+    cluster_addons:
+        needs: checking
+        if: github.event.pull_request.merged == true
+        uses: 5gplustactile/provisioning/.github/workflows/worklfow-cluster-addons.yaml@dt/telefonica
+        secrets:
+            ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+            ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
+            ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
+            GIT_REPO: ${{ secrets.GIT_REPO }}
+            KUBECONFIG_MASTER: ${{ secrets.KUBECONFIG_MASTER }}

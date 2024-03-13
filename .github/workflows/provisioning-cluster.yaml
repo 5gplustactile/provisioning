@@ -1,0 +1,25 @@
+name: wofkflow_cluster
+on:
+    push:
+      branches:
+          - 'dt/**'
+
+jobs:
+    iac:
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-aws.yaml@dt/telefonica
+        secrets:
+            ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+            OPS_AWS_ACCESS_KEY_ID: ${{ secrets.OPS_AWS_ACCESS_KEY_ID }}
+            OPS_AWS_SECRET_ACCESS_KEY: ${{ secrets.OPS_AWS_SECRET_ACCESS_KEY }}
+            OPS_AWS_REGION: ${{ secrets.OPS_AWS_REGION }}
+            SSH_PUB_KEY: ${{ secrets.SSH_PUB_KEY }}
+            SSH_PRIV_KEY: ${{ secrets.SSH_PRIV_KEY }}
+    
+    cluster_as_code:
+        needs: iac
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-cluster.yaml@dt/telefonica
+        secrets:
+            ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+            ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
+            ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
+            GIT_REPO: ${{ secrets.GIT_REPO }}
