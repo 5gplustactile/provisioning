@@ -108,3 +108,110 @@ jobs:
             # change that to run-all before init flag
             terragrunt apply -auto-approve -lock=false --terragrunt-non-interactive --terragrunt-include-external-dependencies
           working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets
+
+        - name: 'storage outputs terragrunt'
+          run: |
+            # storage outputs in file
+            terragrunt output -json outpost_subnet_ids > /tmp/outpost_subnet_ids.json
+            terragrunt output -json private_subnet_ids > /tmp/private_subnet_ids.json
+
+        - name: Upload outpost_subnet_ids.json
+          uses: actions/upload-artifact@v2
+          with:
+            name: outpost_subnet_ids
+            path: /tmp/outpost_subnet_ids.json
+        
+        - name: Upload private_subnet_ids.json
+          uses: actions/upload-artifact@v2
+          with:
+            name: private_subnet_ids
+            path: /tmp/private_subnet_ids.json
+
+        - name: pulling repo 5gplustactile/auto-ztp
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/auto-ztp'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: Upload subnets-output.py
+          uses: actions/upload-artifact@v2
+          with:
+            name: subnets-output
+            path: templates/scripts/subnets-output.py
+
+        - name: pulling repo 5gplustactile/provisioning
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/provisioning'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: Get branch name
+          id: get_branch
+          run: |
+            if [[ "${{ github.event_name }}" == "pull_request_target" ]]; then
+              echo "::set-output name=branch::${{ github.event.pull_request.head.ref }}"
+            else
+              echo "::set-output name=branch::${GITHUB_REF#refs/heads/}"
+            fi
+  
+        - name: Use branch name
+          run: |
+            BRANCH_NAME=${{ steps.get_branch.outputs.branch }}
+            echo "BRANCH_DT=$(echo $BRANCH_NAME | cut -d/ -f2)" >> $GITHUB_ENV
+
+        - name: Get branch name
+          run: |
+            echo 'The branch name is' ${{ env.BRANCH_DT }}
+
+
+        - name: Download outpost_subnet_ids.json
+          uses: actions/download-artifact@v2
+          with:
+            name: outpost_subnet_ids
+
+        - name: Download private_subnet_ids.json
+          uses: actions/download-artifact@v2
+          with:
+            name: private_subnet_ids
+
+        - name: Download subnets-output.py
+          uses: actions/download-artifact@v2
+          with:
+            name: subnets-output
+
+        - name: add subnets into values.yaml file - edge, region, wavelength
+          run: |
+           mv outpost_subnet_ids.json /tmp/outpost_subnet_ids.json
+           mv private_subnet_ids.json /tmp/private_subnet_ids.json
+           mv subnets-output.py /tmp/subnets-output.py
+
+           echo "### create dry-directories ###"
+           mkdir -p /tmp/${{ env.BRANCH_DT }}/edge
+           mkdir -p /tmp/${{ env.BRANCH_DT }}/region
+           mkdir -p /tmp/${{ env.BRANCH_DT }}/wavelength
+
+           echo "### install pip dependencies ###"
+           pip install PyYAML
+          
+           echo "### execution ###"
+           python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
+            --path-private-subnet-id=/tmp/private_subnet_ids.json \
+            --path-dir=${{ env.BRANCH_DT }}/edge --path-dest=/tmp/${{ env.BRANCH_DT }}/edge \
+            --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH_DT }}/edge/dry-run/ \
+            --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/
+
+           python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
+           --path-private-subnet-id=/tmp/private_subnet_ids.json \
+           --path-dir=${{ env.BRANCH_DT }}/region --path-dest=/tmp/${{ env.BRANCH_DT }}/region \
+           --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH_DT }}/region/dry-run/ \
+           --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/
+
+           #python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
+           #--path-private-subnet-id=/tmp/private_subnet_ids.json \
+           #--path-dir=${{ env.BRANCH_DT }}/wavelength --path-dest=/tmp/${{ env.BRANCH_DT }}/wavelength \
+           #--path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH_DT }}/wavelength/dry-run/ \
+           #--git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/
