@@ -6,7 +6,7 @@ on:
 
 jobs:
     iac:
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-aws.yaml@pcicd
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-aws.yaml@cicd
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             OPS_AWS_ACCESS_KEY_ID: ${{ secrets.OPS_AWS_ACCESS_KEY_ID }}
