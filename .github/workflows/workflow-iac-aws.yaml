@@ -114,6 +114,7 @@ jobs:
             # storage outputs in file
             terragrunt output -json outpost_subnet_ids > /tmp/outpost_subnet_ids.json
             terragrunt output -json private_subnet_ids > /tmp/private_subnet_ids.json
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets
 
         - name: Upload outpost_subnet_ids.json
           uses: actions/upload-artifact@v2
@@ -188,11 +189,6 @@ jobs:
            mv outpost_subnet_ids.json /tmp/outpost_subnet_ids.json
            mv private_subnet_ids.json /tmp/private_subnet_ids.json
            mv subnets-output.py /tmp/subnets-output.py
-
-           echo "### create dry-directories ###"
-           mkdir -p /tmp/${{ env.BRANCH_DT }}/edge
-           mkdir -p /tmp/${{ env.BRANCH_DT }}/region
-           mkdir -p /tmp/${{ env.BRANCH_DT }}/wavelength
 
            echo "### install pip dependencies ###"
            pip install PyYAML
