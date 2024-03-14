@@ -6,7 +6,7 @@ on:
 
 jobs:
     iac:
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-aws.yaml@main
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-aws.yaml@pcicd
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             OPS_AWS_ACCESS_KEY_ID: ${{ secrets.OPS_AWS_ACCESS_KEY_ID }}
@@ -17,7 +17,7 @@ jobs:
     
     cluster_as_code:
         needs: iac
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-cluster.yaml@main
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-cluster.yaml@cicd
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
