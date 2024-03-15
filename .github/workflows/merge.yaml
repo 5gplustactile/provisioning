@@ -11,7 +11,7 @@ jobs:
     checking:
         needs: iac
         if: github.event.pull_request.merged == true
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-delete-cluster.yaml@main
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-delete-cluster.yaml@cicd
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
@@ -20,7 +20,7 @@ jobs:
 
     iac:
         if: github.event.pull_request.merged == true
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-post-deploy.yaml@main
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-post-deploy.yaml@cicd
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             OPS_AWS_ACCESS_KEY_ID: ${{ secrets.OPS_AWS_ACCESS_KEY_ID }}

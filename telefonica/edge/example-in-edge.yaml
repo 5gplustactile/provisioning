@@ -1,0 +1,11 @@
+clusters:
+  - name: example-in-edge
+    masterNodes: 1
+    workerNodes: 1
+    version: v1.25.0
+    subnetOutpost:
+      - subnet-01b49d44875bfb66d
+    subnetRegion:
+      - subnet-0402e76036448a797
+      - subnet-0f75715e78d6e26b2
+      - subnet-07820fd9a7e2693e8
