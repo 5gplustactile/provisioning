@@ -188,8 +188,8 @@ jobs:
             --path-private-subnet-id=/tmp/private_subnet_ids.json \
             --path-dir=${{ env.BRANCH }}/region --path-dest=/tmp/${{ env.BRANCH }}/region \
             --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/region/dry-run/ \
-           --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
-           --user-email="action@github.com"
+            --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
+            --user-email="action@github.com"
 
            echo "### execution subnets wavelenght ###"
            #python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
