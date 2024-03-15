@@ -119,84 +119,67 @@ jobs:
             ZONE: edge
           run: |
            echo "### helm template and store manfiest in the deployment folder ###"
-
-           #!/bin/bash
-           set -euxo pipefail
-           # Directory to check
-           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
-           # Initialize counter
-           num_files=0
-           # Print the paths of the files and the cluster name if a YAML file exists
-           find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
-           do
-               echo "Path: $file"
-               if [ -f "$file" ]; then
-                   cluster_name=$(yq e '.clusters[0].name' "$file")
-                   echo "The cluster name in the YAML file is: $cluster_name"
-                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
-               fi
-               ((num_files++))
-           done
-           echo "Found $num_files YAML files in the $dir directory."
-
-        - name: helm template and store manfiest in the deployment folder - region
-          env:
-            ZONE: region
-          run: |
-           echo "### helm template and store manfiest in the deployment folder ###"
-
-           #!/bin/bash
-
-           # to debugging
-           set -euxo pipefail
-           # Directory to check
-           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
-           # Initialize counter
-           num_files=0
-           # Print the paths of the files and the cluster name if a YAML file exists
-           find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
-           do
-               echo "Path: $file"
-               if [ -f "$file" ]; then
-                   cluster_name=$(yq e '.clusters[0].name' "$file")
-                   echo "The cluster name in the YAML file is: $cluster_name"
-                   helm version
-                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
-               fi
-               ((num_files++))
-           done
            
-           echo "Found $num_files YAML files in the $dir directory."
+           bash -x ./templates/scripts/helm-template.sh -d sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run -z ${{ env.ZONE }} -dt ${{ env.BRANCH }}
 
-
-        - name: helm template and store manfiest in the deployment folder - wavelength
-          env:
-            ZONE: wavelength
-          run: |
-           echo "### helm template and store manfiest in the deployment folder ###"
-
-           #!/bin/bash
-
-           # to debugging
-           set -euxo pipefail
-           # Directory to check
-           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
-           # Initialize counter
-           num_files=0
-           # Print the paths of the files and the cluster name if a YAML file exists
-           find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
-           do
-               echo "Path: $file"
-               if [ -f "$file" ]; then
-                   cluster_name=$(yq e '.clusters[0].name' "$file")
-                   echo "The cluster name in the YAML file is: $cluster_name"
-                   helm version
-                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
-               fi
-               ((num_files++))
-           done
-           
-           echo "Found $num_files YAML files in the $dir directory."
+#        - name: helm template and store manfiest in the deployment folder - region
+#          env:
+#            ZONE: region
+#          run: |
+#           echo "### helm template and store manfiest in the deployment folder ###"
+#
+#           #!/bin/bash
+#
+#           # to debugging
+#           set -euxo pipefail
+#           # Directory to check
+#           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
+#           # Initialize counter
+#           num_files=0
+#           # Print the paths of the files and the cluster name if a YAML file exists
+#           find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
+#           do
+#               echo "Path: $file"
+#               if [ -f "$file" ]; then
+#                   cluster_name=$(yq e '.clusters[0].name' "$file")
+#                   echo "The cluster name in the YAML file is: $cluster_name"
+#                   helm version
+#                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
+#               fi
+#               ((num_files++))
+#           done
+#           
+#           echo "Found $num_files YAML files in the $dir directory."
+#
+#
+#        - name: helm template and store manfiest in the deployment folder - wavelength
+#          env:
+#            ZONE: wavelength
+#          run: |
+#           echo "### helm template and store manfiest in the deployment folder ###"
+#
+#           #!/bin/bash
+#
+#           # to debugging
+#           set -euxo pipefail
+#           # Directory to check
+#           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
+#           # Initialize counter
+#           num_files=0
+#           # Print the paths of the files and the cluster name if a YAML file exists
+#           find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
+#           do
+#               echo "Path: $file"
+#               if [ -f "$file" ]; then
+#                   cluster_name=$(yq e '.clusters[0].name' "$file")
+#                   echo "The cluster name in the YAML file is: $cluster_name"
+#                   helm version
+#                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
+#               fi
+#               ((num_files++))
+#           done
+#           
+#           echo "Found $num_files YAML files in the $dir directory."
            
         - name: commit changes in 5gplustactile/auto-ztp repository
           run: |
