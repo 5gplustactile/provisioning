@@ -120,7 +120,7 @@ jobs:
           run: |
            echo "### helm template and store manfiest in the deployment folder ###"
 
-           #!/bin/bash
+           #!/bin/bash -x
            # Directory to check
            dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
            # Initialize counter
