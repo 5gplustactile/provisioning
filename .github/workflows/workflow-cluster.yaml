@@ -120,7 +120,8 @@ jobs:
           run: |
            echo "### helm template and store manfiest in the deployment folder ###"
 
-           #!/bin/bash -x
+           #!/bin/bash
+           set -euxo pipefail
            # Directory to check
            dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
            # Initialize counter
@@ -132,6 +133,7 @@ jobs:
                if [ -f "$file" ]; then
                    cluster_name=$(yq e '.clusters[0].name' "$file")
                    echo "The cluster name in the YAML file is: $cluster_name"
+                   helm version
                    helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml 2> /dev/null
                fi
                ((num_files++))
