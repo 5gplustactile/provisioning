@@ -120,7 +120,7 @@ jobs:
           run: |
            echo "### helm template and store manfiest in the deployment folder ###"
            
-           bash -x ./templates/scripts/helm-template.sh -d sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run -z ${{ env.ZONE }} -dt ${{ env.BRANCH }}
+           bash -x ./templates/scripts/helm-template.sh -d sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run -e ${{ env.ZONE }} -t ${{ env.BRANCH }}
 
 #        - name: helm template and store manfiest in the deployment folder - region
 #          env:
