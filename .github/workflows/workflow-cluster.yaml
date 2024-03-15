@@ -122,7 +122,7 @@ jobs:
 
            #!/bin/bash
            # Directory to check
-           dir="auto-ztp/sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
+           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
            # Initialize counter
            num_files=0
            # Print the paths of the files and the cluster name if a YAML file exists
@@ -147,7 +147,7 @@ jobs:
 
            #!/bin/bash
            # Directory to check
-           dir="auto-ztp/sites/${{ env.BRANCH }}//${{ env.ZONE }}/dry-run"
+           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
            # Initialize counter
            num_files=0
            # Print the paths of the files and the cluster name if a YAML file exists
@@ -173,7 +173,7 @@ jobs:
 
            #!/bin/bash
            # Directory to check
-           dir="auto-ztp/sites/${{ env.BRANCH }}//${{ env.ZONE }}/dry-run"
+           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
            # Initialize counter
            num_files=0
            # Print the paths of the files and the cluster name if a YAML file exists
