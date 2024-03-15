@@ -167,9 +167,7 @@ jobs:
 
         - name: add subnets into values.yaml file - edge, region, wavelength
           run: |
-           git config --local user.email "action@github.com"
-           git config --local user.name "GitHub Action"
-
+           
            mv outpost_subnet_ids.json /tmp/outpost_subnet_ids.json
            mv private_subnet_ids.json /tmp/private_subnet_ids.json
            mv subnets-output.py /tmp/subnets-output.py
@@ -182,18 +180,21 @@ jobs:
             --path-private-subnet-id=/tmp/private_subnet_ids.json \
             --path-dir=${{ env.BRANCH }}/edge --path-dest=/tmp/${{ env.BRANCH }}/edge \
             --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/edge/dry-run/ \
-            --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/
+            --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
+            --user-email="action@github.com"
 
            echo "### execution subnets region ###"
            python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
             --path-private-subnet-id=/tmp/private_subnet_ids.json \
             --path-dir=${{ env.BRANCH }}/region --path-dest=/tmp/${{ env.BRANCH }}/region \
             --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/region/dry-run/ \
-           --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/
+            --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
+            --user-email="action@github.com"
 
            echo "### execution subnets wavelenght ###"
            #python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
            # --path-private-subnet-id=/tmp/private_subnet_ids.json \
            # --path-dir=${{ env.BRANCH }}/wavelength --path-dest=/tmp/${{ env.BRANCH }}/wavelength \
            # --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/wavelength/dry-run/ \
-           # --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/
+           # --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
+           # --user-email="action@github.com"
