@@ -310,39 +310,39 @@ jobs:
             APPNAME: edge-clusters
           run: |
            argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-           argocd app sync ${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
+           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
 
         - name: argocd edge - review difference against the target and live state before syncing app
           env:
             APPNAME: edge-clusters
           run: |
            argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-           echo "n" | argocd app sync ${{ env.NAME_ARGOCD_APP_EDGE }}  --preview-changes
+           echo "n" | argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }}  --preview-changes
 
         - name: argocd region - pre-deploy
           env:
             APPNAME: region-clusters
           run: |
            argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-           argocd app sync ${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
+           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
 
         - name: argocd region - review difference against the target and live state before syncing app
           env:
             APPNAME: region-clusters
           run: |
            argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-           echo "n" | argocd app sync ${{ env.BRANCH }}-${{ env.APPNAME }}  --preview-changes
+           echo "n" | argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --preview-changes
 
 #        - name: argocd wavelength - pre-deploy
 #          env:
 #            APPNAME: wavelength-clusters
 #          run: |
 #           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-#           argocd app sync ${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
+#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
 #
 #        - name: argocd wavelength - review difference against the target and live state before syncing app
 #          env:
 #            APPNAME: wavelength-clusters
 #          run: |
 #           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-#           echo "n" | argocd app sync ${{ env.BRANCH }}-${{ env.APPNAME }} --preview-changes           
+#           echo "n" | argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --preview-changes           
