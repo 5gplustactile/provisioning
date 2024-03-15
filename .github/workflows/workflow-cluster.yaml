@@ -132,7 +132,7 @@ jobs:
                if [ -f "$file" ]; then
                    cluster_name=$(yq e '.clusters[0].name' "$file")
                    echo "The cluster name in the YAML file is: $cluster_name"
-                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > auto-ztp/sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
+                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
                fi
                ((num_files++))
            done < <(find "$dir" -name '*.yaml' -print0)
@@ -157,7 +157,7 @@ jobs:
                if [ -f "$file" ]; then
                    cluster_name=$(yq e '.clusters[0].name' "$file")
                    echo "The cluster name in the YAML file is: $cluster_name"
-                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > auto-ztp/sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
+                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
                fi
                ((num_files++))
            done < <(find "$dir" -name '*.yaml' -print0)
@@ -183,7 +183,7 @@ jobs:
                if [ -f "$file" ]; then
                    cluster_name=$(yq e '.clusters[0].name' "$file")
                    echo "The cluster name in the YAML file is: $cluster_name"
-                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > auto-ztp/sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
+                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
                fi
                ((num_files++))
            done < <(find "$dir" -name '*.yaml' -print0)
