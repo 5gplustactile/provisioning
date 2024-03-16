@@ -115,9 +115,10 @@ jobs:
             run: |
              # Initialize counter
              num_files=0
+             set -euxo pipefail
              
              # directory
-             dir=${{ env.BRANCH_DT }}//${{ env.ENVIRON }}
+             dir=${{ env.BRANCH_DT }}/${{ env.ENVIRON }}
              
              # tmp file. list of name clusters
              OUTPUT_FILE=./clusters-${{ env.ENVIRON }}.output
@@ -429,6 +430,7 @@ jobs:
               
 
           - name: creating app in argocd - region
+            if: env.file_region_is_null == 'false'
             env:
               ENVIRON: region
             run: |
@@ -446,6 +448,7 @@ jobs:
              done
             
           - name: creating app in argocd - edge
+            if: env.file_edge_is_null == 'false'
             env:
               ENVIRON: edge
             run: |
@@ -463,6 +466,7 @@ jobs:
              done
 
           - name: creating app in argocd - wavelength
+            if: env.file_wavelength_is_null == 'false'
             env:
               ENVIRON: wavelength
             run: |
