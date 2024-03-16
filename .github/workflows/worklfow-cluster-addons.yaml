@@ -69,6 +69,15 @@ jobs:
              echo "### envsubst ###"
              sudo apt-get install gettext-base -y
              envsubst --version
+             
+             echo "### install helm ###"
+             # Download Helm
+             curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3           
+             # Give the script execute permission
+             chmod 700 get_helm.sh           
+             # Run the install script
+             ./get_helm.sh
+             helm version
   
           - name: pulling 5gplustactile/provisioning repo
             uses: actions/checkout@v3
@@ -104,101 +113,127 @@ jobs:
             env:
               ENVIRON: region
             run: |
-             FILE=./${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values.yaml
-             OUTPUT_FILE=/tmp/clusters-${{ env.ENVIRON }}.output
-  
-             if [ -f "$FILE" ]; then
-              echo "$FILE exists."
-              for c in $(yq e '.clusters[].name' $FILE)
-              do
-                echo "${{ env.BRANCH_DT }}-${{ env.ENVIRON }}-$c" | tee -a $OUTPUT_FILE
-                cat $OUTPUT_FILE
-              done
-              # Check if OUTPUT_FILE contains the string "null"
-              if [ -f "$OUTPUT_FILE" ]; then
-                echo "the file $OUTPUT_FILE exist"
-                if grep -q "^null$" $OUTPUT_FILE; then
-                  echo "setting file_region_is_null = true"
-                  echo "file_region_is_null=true" >> $GITHUB_ENV
-                else
-                  echo "setting file_region_is_null = false"
-                  echo "file_region_is_null=false" >> $GITHUB_ENV
-                fi
-              else
-                echo "setting file_region_is_null = true"
-                echo "file_region_is_null=true" >> $GITHUB_ENV
-                exit 0;
-              fi           
-              else
-               echo "$FILE does not exist."
-               exit 1;
-              fi        
+             # Initialize counter
+             num_files=0
+             
+             # directory
+             dir=${{ env.BRANCH_DT }}//${{ env.ENVIRON }}
+             
+             # tmp file. list of name clusters
+             OUTPUT_FILE=./clusters-${{ env.ENVIRON }}.output
+             
+             # Print the paths of the files and the cluster name if a YAML file exists
+             find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
+             do
+                 echo "Path: $file"
+                 if [ -f "$file" ]; then
+                     cluster_name=$(yq e '.clusters[0].name' "$file")
+                     echo "The cluster name in the YAML file is: $cluster_name"
+                     
+                     echo "$cluster_name" | tee -a $OUTPUT_FILE
+                     
+                    # Check if OUTPUT_FILE contains the string "null"
+                    if [ -f "$OUTPUT_FILE" ]; then
+                      echo "the file $OUTPUT_FILE exist"
+                      if grep -q "^null$" $OUTPUT_FILE; then
+                        echo "setting file_region_is_null = true"
+                        echo "file_region_is_null=true" >> $GITHUB_ENV
+                      else
+                        echo "setting file_region_is_null = false"
+                        echo "file_region_is_null=false" >> $GITHUB_ENV
+                      fi
+                     else
+                       echo "setting file_region_is_null = true"
+                       echo "file_region_is_null=true" >> $GITHUB_ENV
+                       exit 0;
+                     fi
+                 fi
+                 ((num_files++))
+             done       
 
           - name: name clusters - edge
             env:
               ENVIRON: edge
             run: |
-             FILE=./${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values.yaml
-             OUTPUT_FILE=/tmp/clusters-${{ env.ENVIRON }}.output
-  
-             if [ -f "$FILE" ]; then
-              echo "$FILE exists."
-              for c in $(yq e '.clusters[].name' $FILE)
-              do
-                echo "${{ env.BRANCH_DT }}-${{ env.ENVIRON }}-$c" | tee -a $OUTPUT_FILE
-              done
-              # Check if OUTPUT_FILE contains the string "null"
-              if [ -f "$OUTPUT_FILE" ]; then
-                echo "the file $OUTPUT_FILE exist"
-                if grep -q "^null$" $OUTPUT_FILE; then
-                  echo "setting file_edge_is_null = true"
-                  echo "file_edge_is_null=true" >> $GITHUB_ENV
-                else
-                  echo "setting file_edge_is_null = false"
-                  echo "file_edge_is_null=false" >> $GITHUB_ENV
-                fi
-              else
-                echo "setting file_edge_is_null = true"
-                echo "file_edge_is_null=true" >> $GITHUB_ENV
-                exit 0;
-              fi           
-             else
-              echo "$FILE does not exist."
-              exit 1;
-             fi     
+             # Initialize counter
+             num_files=0
+             
+             # directory
+             dir=${{ env.BRANCH_DT }}//${{ env.ENVIRON }}
+             
+             # tmp file. list of name clusters
+             OUTPUT_FILE=./clusters-${{ env.ENVIRON }}.output
+             
+             # Print the paths of the files and the cluster name if a YAML file exists
+             find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
+             do
+                 echo "Path: $file"
+                 if [ -f "$file" ]; then
+                     cluster_name=$(yq e '.clusters[0].name' "$file")
+                     echo "The cluster name in the YAML file is: $cluster_name"
+                     
+                     echo "$cluster_name" | tee -a $OUTPUT_FILE
+                     
+                    # Check if OUTPUT_FILE contains the string "null"
+                    if [ -f "$OUTPUT_FILE" ]; then
+                      echo "the file $OUTPUT_FILE exist"
+                      if grep -q "^null$" $OUTPUT_FILE; then
+                        echo "setting file_edge_is_null = true"
+                        echo "file_edge_is_null=true" >> $GITHUB_ENV
+                      else
+                        echo "setting file_edge_is_null = false"
+                        echo "file_edge_is_null=false" >> $GITHUB_ENV
+                      fi
+                     else
+                       echo "setting file_edge_is_null = true"
+                       echo "file_edge_is_null=true" >> $GITHUB_ENV
+                       exit 0;
+                     fi
+                 fi
+                 ((num_files++))
+             done    
              
           - name: name clusters - wavelength
             env:
               ENVIRON: wavelength
             run: |
-             FILE=./${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values.yaml
-             OUTPUT_FILE=/tmp/clusters-${{ env.ENVIRON }}.output
-  
-             if [ -f "$FILE" ]; then
-              echo "$FILE exists."
-              for c in $(yq e '.clusters[].name' $FILE)
-              do
-                echo "${{ env.BRANCH_DT }}-${{ env.ENVIRON }}-$c" | tee -a $OUTPUT_FILE
-              done
-              # Check if OUTPUT_FILE contains the string "null"
-              if [ -f "$OUTPUT_FILE" ]; then
-                echo "the file $OUTPUT_FILE exist"
-                if grep -q "^null$" $OUTPUT_FILE; then
-                  echo "setting file_wavelength_is_null = true"
-                  echo "file_wavelength_is_null=true" >> $GITHUB_ENV
-                else
-                  echo "setting file_wavelength_is_null = false"
-                  echo "file_wavelength_is_null=false" >> $GITHUB_ENV
-                fi
-              else
-                echo "setting file_wavelength_is_null = true"
-                echo "file_wavelength_is_null=true" >> $GITHUB_ENV
-                exit 0;
-              fi            
-             else
-              echo "$FILE does not exist."
-              exit 1;
-             fi  
+             # Initialize counter
+             num_files=0
+             
+             # directory
+             dir=${{ env.BRANCH_DT }}//${{ env.ENVIRON }}
+             
+             # tmp file. list of name clusters
+             OUTPUT_FILE=./clusters-${{ env.ENVIRON }}.output
+             
+             # Print the paths of the files and the cluster name if a YAML file exists
+             find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
+             do
+                 echo "Path: $file"
+                 if [ -f "$file" ]; then
+                     cluster_name=$(yq e '.clusters[0].name' "$file")
+                     echo "The cluster name in the YAML file is: $cluster_name"
+                     
+                     echo "$cluster_name" | tee -a $OUTPUT_FILE
+                     
+                    # Check if OUTPUT_FILE contains the string "null"
+                    if [ -f "$OUTPUT_FILE" ]; then
+                      echo "the file $OUTPUT_FILE exist"
+                      if grep -q "^null$" $OUTPUT_FILE; then
+                        echo "setting file_wavelength_is_null = true"
+                        echo "file_wavelength_is_null=true" >> $GITHUB_ENV
+                      else
+                        echo "setting file_wavelength_is_null = false"
+                        echo "file_wavelength_is_null=false" >> $GITHUB_ENV
+                      fi
+                     else
+                       echo "setting file_wavelength_is_null = true"
+                       echo "file_wavelength_is_null=true" >> $GITHUB_ENV
+                       exit 0;
+                     fi
+                 fi
+                 ((num_files++))
+             done  
 
           - name: Upload clusters-region.output
             if: env.file_region_is_null == 'false'
@@ -230,7 +265,7 @@ jobs:
           - name: pulling 5gplustactile/auto-ztp repo main branch
             uses: actions/checkout@v3
             with:
-              repository: '5gplustactile/auto-ztp '
+              repository: '5gplustactile/auto-ztp'
               ref: main
               fetch-depth: 0
               token: ${{ secrets.ACCESS_TOKEN }}
@@ -284,6 +319,7 @@ jobs:
             if: env.file_region_is_null == 'false'
             env:
               ENVIRON: region
+              APPNAME: region-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
              FILE=clusters-${{ env.ENVIRON }}.output
@@ -292,7 +328,7 @@ jobs:
                   echo "The file $FILE is not empty."                
                   for c in $(cat clusters-${{ env.ENVIRON }}.output)
                   do
-                     clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                     clusterctl get kubeconfig ${{ env.APPNAME }}-$c -n ${{ env.APPNAME }}-$c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
                  
                      kubectl apply -f templates/cluster-addons/cni/calico.yaml --kubeconfig ~/$c.kubeconfig
                      if kubectl taint nodes --all node.cluster.x-k8s.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
@@ -320,6 +356,7 @@ jobs:
             if: env.file_edge_is_null == 'false'
             env:
               ENVIRON: edge
+              APPNAME: edge-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
              FILE=clusters-${{ env.ENVIRON }}.output
@@ -328,7 +365,7 @@ jobs:
                   echo "The file $FILE is not empty."                
                   for c in $(cat clusters-${{ env.ENVIRON }}.output)
                   do
-                     clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                     clusterctl get kubeconfig ${{ env.APPNAME }}-$c -n ${{ env.APPNAME }}-$c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
                  
                      kubectl apply -f templates/cluster-addons/cni/calico.yaml --kubeconfig ~/$c.kubeconfig
                      if kubectl taint nodes --all node.cluster.x-k8s.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
@@ -357,6 +394,7 @@ jobs:
             if: env.file_wavelength_is_null == 'false'
             env:
               ENVIRON: wavelength
+              APPNAME: wavelength-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
              FILE=clusters-${{ env.ENVIRON }}.output
@@ -365,7 +403,7 @@ jobs:
                   echo "The file $FILE is not empty."                
                   for c in $(cat clusters-${{ env.ENVIRON }}.output)
                   do
-                     clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                     clusterctl get kubeconfig ${{ env.APPNAME }}-$c -n ${{ env.APPNAME }}-$c  --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
                  
                      kubectl apply -f templates/cluster-addons/cni/calico.yaml --kubeconfig ~/$c.kubeconfig
                      if kubectl taint nodes --all node.cluster.x-k8s.io/uninitialized- --kubeconfig ~/$c.kubeconfig ; then
@@ -390,10 +428,62 @@ jobs:
               fi
               
 
+          - name: creating app in argocd - region
+            env:
+              ENVIRON: region
+            run: |
+             #!/bin/bash
+             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
+             export GIT_REPO=${{ secrets.GIT_REPO }}
+             while :
+             do
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
+                   echo "app created"
+                   exit 0;
+                 else
+                  exit 0;
+                fi 
+             done
+            
+          - name: creating app in argocd - edge
+            env:
+              ENVIRON: edge
+            run: |
+             #!/bin/bash
+             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
+             export GIT_REPO=${{ secrets.GIT_REPO }}
+             while :
+             do
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
+                   echo "app created"
+                   exit 0;
+                 else
+                  exit 0;
+                fi 
+             done
+
+          - name: creating app in argocd - wavelength
+            env:
+              ENVIRON: wavelength
+            run: |
+             #!/bin/bash
+             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
+             export GIT_REPO=${{ secrets.GIT_REPO }}
+             while :
+             do
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
+                   echo "app created"
+                   exit 0;
+                 else
+                  exit 0;
+                fi 
+             done  
+
           - name: Setting up cluster-addons - region
             if: env.file_region_is_null == 'false'
             env:
               ENVIRON: region
+              APPNAME: region-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
              FILE=clusters-${{ env.ENVIRON }}.output
@@ -403,7 +493,7 @@ jobs:
 
                   for c in $(cat clusters-${{ env.ENVIRON }}.output)
                   do
-                   clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                   clusterctl get kubeconfig ${{ env.APPNAME }}-$c -n ${{ env.APPNAME }}-$c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
                     export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$c.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
                     echo "ENDPOINT=$ENDPOINT"
                     argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure || true
@@ -412,13 +502,13 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
+                    cp -p templates/helm-cluster-addons/values_default.yaml \
+                      sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/helm-cluster-addons/values.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
 
-                    kubectl apply -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons.yaml --kubeconfig ~/mgmt.kubeconfig
-
-                    kubectl config rename-context $c-admin@$c $c --kubeconfig ~/$c.kubeconfig
+                    kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
                     export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
                     #kubectl config view --flatten
@@ -432,11 +522,10 @@ jobs:
                        exit 1;
                     fi 
      
-                    #echo "### install cert-manager ###"
-                    #CLUSTER_URL=$ENDPOINT NAME_CLUSTER=$c PROJECT=${{ env.BRANCH_DT }} envsubst < templates/cluster-addons/security/cert-manager.yaml > sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/$c/security/cert-manager.yaml
-                    
-                    ## config more addons using the same command above ##
-                    # ...
+                    echo "### helm template ###"
+                    helm template -n addons sites/templates/helm-cluster-addons \
+                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
      
                   done
                 else
@@ -448,9 +537,10 @@ jobs:
        
 
           - name: Setting up cluster-addons - edge
-            if: env.file_edge_is_null == 'false'
+            if: env.file_region_is_null == 'false'
             env:
               ENVIRON: edge
+              APPNAME: edge-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
              FILE=clusters-${{ env.ENVIRON }}.output
@@ -460,21 +550,22 @@ jobs:
 
                   for c in $(cat clusters-${{ env.ENVIRON }}.output)
                   do
-                   clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                   clusterctl get kubeconfig ${{ env.APPNAME }}-$c -n ${{ env.APPNAME }}-$c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
                     export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$c.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
                     echo "ENDPOINT=$ENDPOINT"
                     argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure || true
+                   
                     echo "### install pip dependencies ###"
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
+                    cp -p templates/helm-cluster-addons/values_default.yaml \
+                      sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/helm-cluster-addons/values.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
-                    
-                    kubectl apply -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons.yaml --kubeconfig ~/mgmt.kubeconfig
 
-                    kubectl config rename-context $c-admin@$c $c --kubeconfig ~/$c.kubeconfig
+                    kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
                     export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
                     #kubectl config view --flatten
@@ -488,11 +579,10 @@ jobs:
                        exit 1;
                     fi 
      
-                    #echo "### install cert-manager ###"
-                    #CLUSTER_URL=$ENDPOINT NAME_CLUSTER=$c PROJECT=${{ env.BRANCH_DT }} envsubst < templates/cluster-addons/security/cert-manager.yaml > sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/$c/security/cert-manager.yaml
-                    
-                    ## config more addons using the same command above ##
-                    # ...
+                    echo "### helm template ###"
+                    helm template -n addons sites/templates/helm-cluster-addons \
+                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
      
                   done
                 else
@@ -500,12 +590,13 @@ jobs:
                 fi
               else
                 echo "The file $FILE does not exist."
-              fi
+              fi 
 
           - name: Setting up cluster-addons - wavelength
-            if: env.file_wavelength_is_null == 'false'
+            if: env.file_region_is_null == 'false'
             env:
               ENVIRON: wavelength
+              APPNAME: wavelength-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
              FILE=clusters-${{ env.ENVIRON }}.output
@@ -515,21 +606,22 @@ jobs:
 
                   for c in $(cat clusters-${{ env.ENVIRON }}.output)
                   do
-                   clusterctl get kubeconfig $c -n $c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
+                   clusterctl get kubeconfig ${{ env.APPNAME }}-$c -n ${{ env.APPNAME }}-$c --kubeconfig ~/mgmt.kubeconfig > ~/$c.kubeconfig
                     export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$c.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
                     echo "ENDPOINT=$ENDPOINT"
                     argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure || true
+                   
                     echo "### install pip dependencies ###"
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
+                    cp -p templates/helm-cluster-addons/values_default.yaml \
+                      sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/helm-cluster-addons/values.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
-                    
-                    kubectl apply -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons.yaml --kubeconfig ~/mgmt.kubeconfig
 
-                    kubectl config rename-context $c-admin@$c $c --kubeconfig ~/$c.kubeconfig
+                    kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
                     export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
                     #kubectl config view --flatten
@@ -543,11 +635,10 @@ jobs:
                        exit 1;
                     fi 
      
-                    #echo "### install cert-manager ###"
-                    #CLUSTER_URL=$ENDPOINT NAME_CLUSTER=$c PROJECT=${{ env.BRANCH_DT }} envsubst < templates/cluster-addons/security/cert-manager.yaml > sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/$c/security/cert-manager.yaml
-                    
-                    ## config more addons using the same command above ##
-                    # ...
+                    echo "### helm template ###"
+                    helm template -n addons sites/templates/helm-cluster-addons \
+                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
      
                   done
                 else
@@ -555,7 +646,7 @@ jobs:
                 fi
               else
                 echo "The file $FILE does not exist."
-              fi
+              fi 
 
           - name: commit changes in tactile5g-auto-ztp repository
             if: env.file_wavelength_is_null == 'false' || env.file_region_is_null == 'false' || env.file_edge_is_null == 'false'
