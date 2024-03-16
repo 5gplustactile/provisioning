@@ -100,52 +100,51 @@ jobs:
 
         - name: name clusters all regions
           run: |
-           # Define the files with the environment variable
-           FILE_EDGE=./${{ env.BRANCH_DT }}/edge/values.yaml
-           FILE_REGION=./${{ env.BRANCH_DT }}/region/values.yaml
-           FILE_WAVELENGTH=./${{ env.BRANCH_DT }}/wavelength/values.yaml
+           #!/bin/bash
            
+           # directories
+           DIR_EDGE=${{ env.BRANCH_DT }}/edge
+           DIR_REGION=${{ env.BRANCH_DT }}/region
+           DIR_WAVELENGTH=${{ env.BRANCH_DT }}/wavelength
+           
+           # tmp files. list of name clusters
            OUTPUT_FILE_EDGE=/tmp/clusters-edge.output
            OUTPUT_FILE_REGION=/tmp/clusters-region.output
-           OUTPUT_FILE_WAVELENGTH=/tmp/clusters-region.output
+           OUTPUT_FILE_WAVELENGTH=/tmp/clusters-wavelength.output
+           
+           # Function to process files
+           process_files() {
+               local dir=$1
+               local output_file=$2
+           
+               find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
+               do
+                   echo "Path: $file"
+                   if [ -f "$file" ]; then
+                       cluster_name=$(yq e '.clusters[0].name' "$file")
+                       echo "The cluster name in the YAML file is: $cluster_name"
+                       
+                       # Check if cluster_name is not null or 'null' before appending
+                       if [ -n "$cluster_name" ] && [ "$cluster_name" != "null" ]; then
+                           echo "$cluster_name" | tee -a $output_file
+                       fi
+                   fi
+               done
+           }
+           
+           # Process files in directories
+           process_files $DIR_EDGE $OUTPUT_FILE_EDGE
+           process_files $DIR_REGION $OUTPUT_FILE_REGION
+           process_files $DIR_WAVELENGTH $OUTPUT_FILE_WAVELENGTH
+           
+           # Concatenate output files if they exist
+           for file in $OUTPUT_FILE_EDGE $OUTPUT_FILE_REGION $OUTPUT_FILE_WAVELENGTH
+           do
+               if [ -f $file ]; then
+                   cat $file | tee /tmp/inventory.output
+               fi
+           done
 
-           if [ -f "$FILE_EDGE" ] && [ -f "$FILE_REGION" ] && [ -f "$FILE_WAVELENGTH" ]; then
-              echo "$FILE_EDGE, $FILE_REGION, $FILE_WAVELENGTH exists."
-              
-              for c in $(yq e '.clusters[].name' $FILE_EDGE)
-              do
-                echo "${{ env.BRANCH_DT }}-edge-$c" | tee -a $OUTPUT_FILE_EDGE
-              done
-              for c in $(yq e '.clusters[].name' $FILE_REGION)
-              do
-                echo "${{ env.BRANCH_DT }}-region-$c" | tee -a $OUTPUT_FILE_REGION
-              done
-              for c in $(yq e '.clusters[].name' $FILE_WAVELENGTH)
-              do
-                echo "${{ env.BRANCH_DT }}-wavelength-$c" | tee -a $OUTPUT_FILE_WAVELENGTH
-              done
-  
-              echo "all files required exist"
-              if [ -f "$OUTPUT_FILE_EDGE" ] && [ -f "$OUTPUT_FILE_REGION" ] && [ -f "$OUTPUT_FILE_WAVELENGTH" ]; then
-                  # cat $OUTPUT_FILE_EDGE
-                  cat $OUTPUT_FILE_EDGE
-                  # cat $OUTPUT_FILE_REGION
-                  cat $OUTPUT_FILE_REGION
-                  # cat $OUTPUT_FILE_WAVELENGTH
-                  cat $OUTPUT_FILE_WAVELENGTH
-              else
-                echo "all files not exist, creating new ones with empty content"
-                touch $OUTPUT_FILE_EDGE $OUTPUT_FILE_REGION $OUTPUT_FILE_WAVELENGTH
-              fi
-  
-              # build the inventory clusters
-              cat $OUTPUT_FILE_EDGE $OUTPUT_FILE_REGION $OUTPUT_FILE_WAVELENGTH > /tmp/inventory.output
-              echo "setting file_all_is_null = true"
-              echo "file_all_is_null=true" >> $GITHUB_ENV     
-           else
-              echo "some files do not exist."
-              exit 1;
-           fi  
 
         - name: Upload inventory.output
           uses: actions/upload-artifact@v2
@@ -171,6 +170,49 @@ jobs:
            mv inventory.output /tmp/inventory.output
            # cat /tmp/inventory.output
            cat /tmp/inventory.output 
+           #!/bin/bash
+           
+           # Define the directory and the inventory file
+           # directories
+           DIR_EDGE=${{ env.BRANCH_DT }}/edge
+           DIR_REGION=${{ env.BRANCH_DT }}/region
+           DIR_WAVELENGTH=${{ env.BRANCH_DT }}/wavelength
+           
+           # Path to the inventory file
+           inventory_file="/tmp/inventory.output"           
+
+           # Array of directories to check
+           directories=("$DIR_EDGE" "$DIR_REGION" "$DIR_WAVELENGTH")           
+
+           # Iterate over all directories
+           for directory in "${directories[@]}"; do
+             # Iterate over all .yaml files in the current directory
+             for file_path in $directory/*.yaml; do
+               # Extract the base name of the file (without the directory and .yaml extension)
+               base_name=$(basename "$file_path" .yaml)           
+
+               # Check if the base name is in the inventory file
+               if grep -Fxq "$base_name" "$inventory_file"; then
+                 echo "File '$base_name.yaml' exists in both the directory '$directory' and the inventory file."
+               else
+                 echo "File '$base_name.yaml' exists in the directory '$directory' but not in the inventory file."
+                 echo "Deleting files $directory/$base_name.yaml"
+                 rm -rf $directory/$base_name.yaml
+
+                 echo "### login argocd ###"
+                 argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure
+                 echo "### list cluster argocd ###"
+                 argocd cluster list --grpc-web | awk 'NR>1 && $2!="in-cluster" {print $2}' | grep ${{ env.BRANCH_DT }}- > /tmp/argocd-inventory-clusters.output || true
+      
+
+
+               fi
+             done
+           done
+
+
+
+
            echo "### login argocd ###"
            argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure
            echo "### list cluster argocd ###"

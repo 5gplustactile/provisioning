@@ -108,3 +108,93 @@ jobs:
             # change that to run-all before init flag
             terragrunt apply -auto-approve -lock=false --terragrunt-non-interactive --terragrunt-include-external-dependencies
           working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets
+
+        - name: 'storage outputs terragrunt'
+          run: |
+            # storage outputs in file
+            terragrunt output -json outpost_subnet_ids > /tmp/outpost_subnet_ids.json
+            terragrunt output -json private_subnet_ids > /tmp/private_subnet_ids.json
+          working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets
+
+        - name: Upload outpost_subnet_ids.json
+          uses: actions/upload-artifact@v2
+          with:
+            name: outpost_subnet_ids
+            path: /tmp/outpost_subnet_ids.json
+        
+        - name: Upload private_subnet_ids.json
+          uses: actions/upload-artifact@v2
+          with:
+            name: private_subnet_ids
+            path: /tmp/private_subnet_ids.json
+
+        - name: pulling repo 5gplustactile/auto-ztp
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/auto-ztp'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: Upload subnets-output.py
+          uses: actions/upload-artifact@v2
+          with:
+            name: subnets-output
+            path: templates/scripts/subnets-output.py
+
+        - name: pulling repo 5gplustactile/provisioning
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/provisioning'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}
+
+        - name: Download outpost_subnet_ids.json
+          uses: actions/download-artifact@v2
+          with:
+            name: outpost_subnet_ids
+
+        - name: Download private_subnet_ids.json
+          uses: actions/download-artifact@v2
+          with:
+            name: private_subnet_ids
+
+        - name: Download subnets-output.py
+          uses: actions/download-artifact@v2
+          with:
+            name: subnets-output
+
+        - name: add subnets into values.yaml file - edge, region, wavelength
+          run: |
+           
+           mv outpost_subnet_ids.json /tmp/outpost_subnet_ids.json
+           mv private_subnet_ids.json /tmp/private_subnet_ids.json
+           mv subnets-output.py /tmp/subnets-output.py
+
+           echo "### install pip dependencies ###"
+           pip install PyYAML
+          
+           echo "### execution subnets edge ###"
+           python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
+            --path-private-subnet-id=/tmp/private_subnet_ids.json \
+            --path-dir=${{ env.BRANCH }}/edge --path-dest=/tmp/${{ env.BRANCH }}/edge \
+            --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/edge/dry-run/ \
+            --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
+            --user-email="action@github.com"
+
+           echo "### execution subnets region ###"
+           python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
+            --path-private-subnet-id=/tmp/private_subnet_ids.json \
+            --path-dir=${{ env.BRANCH }}/region --path-dest=/tmp/${{ env.BRANCH }}/region \
+            --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/region/dry-run/ \
+            --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
+            --user-email="action@github.com"
+
+           echo "### execution subnets wavelenght ###"
+           #python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
+           # --path-private-subnet-id=/tmp/private_subnet_ids.json \
+           # --path-dir=${{ env.BRANCH }}/wavelength --path-dest=/tmp/${{ env.BRANCH }}/wavelength \
+           # --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/wavelength/dry-run/ \
+           # --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
+           # --user-email="action@github.com"

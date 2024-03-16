@@ -71,6 +71,15 @@ jobs:
            # delete package
            rm argocd-linux-amd64
 
+           echo "### install helm ###"
+           # Download Helm
+           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3           
+           # Give the script execute permission
+           chmod 700 get_helm.sh           
+           # Run the install script
+           ./get_helm.sh
+           helm version
+
         - name: create Pull Request
           env:
             TARGET_BRANCH: main
@@ -105,37 +114,72 @@ jobs:
           run: |
            echo "BRANCH=$(echo ${{ steps.extract_branch.outputs.branch }} | cut -d/ -f2)" >> $GITHUB_ENV
 
-        - name: targetRevision of helm chart
+        - name: helm template and store manfiest in the deployment folder - edge
+          env:
+            ZONE: edge
           run: |
-           echo "### modifying targetRevision ###"
-           yq e '.spec.sources[1].targetRevision="${{ steps.extract_branch.outputs.branch }}"' -i sites/${{ env.BRANCH }}/edge/app.yaml
-           yq eval '.metadata.name = "clusters-${{ env.BRANCH }}-edge-clusters"' -i sites/${{ env.BRANCH }}/edge/app.yaml
-           yq eval '.spec.destination.namespace = "${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/edge/app.yaml
-           yq eval '.spec.sources[0].helm.valueFiles[0] = "$values/${{ env.BRANCH }}/edge/values.yaml"' -i sites/${{ env.BRANCH }}/edge/app.yaml
-
-           cp -pr templates/helm-edge-chart/ sites/${{ env.BRANCH }}/edge
-           yq eval '.name = "${{ env.BRANCH }}-edge"' -i sites/${{ env.BRANCH }}/edge/helm-edge-chart/Chart.yaml
+           echo "### helm template and store manfiest in the deployment folder ###"
            
-           
-           yq e '.spec.sources[1].targetRevision="${{ steps.extract_branch.outputs.branch }}"' -i sites/${{ env.BRANCH }}/region/app.yaml
-           yq eval '.metadata.name = "clusters-${{ env.BRANCH }}-region-clusters"' -i sites/${{ env.BRANCH }}/region/app.yaml
-           yq eval '.spec.destination.namespace = "${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/region/app.yaml
-           yq eval '.spec.sources[0].helm.valueFiles[0] = "$values/${{ env.BRANCH }}/region/values.yaml"' -i sites/${{ env.BRANCH }}/region/app.yaml
+           bash -x ./templates/scripts/helm-template.sh -d sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run -e ${{ env.ZONE }} -t ${{ env.BRANCH }}
 
-           cp -pr templates/helm-region-chart/ sites/${{ env.BRANCH }}/region
-           yq eval '.name = "${{ env.BRANCH }}-region"' -i sites/${{ env.BRANCH }}/region/helm-region-chart/Chart.yaml
-           
-           yq e '.spec.sources[1].targetRevision="${{ steps.extract_branch.outputs.branch }}"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
-           yq eval '.metadata.name = "clusters-${{ env.BRANCH }}-wavelength-clusters"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
-           yq eval '.spec.destination.namespace = "${{ env.BRANCH }}"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
-           yq eval '.spec.sources[0].helm.valueFiles[0] = "$values/${{ env.BRANCH }}/wavelength/values.yaml"' -i sites/${{ env.BRANCH }}/wavelength/app.yaml
-
-           cp -pr templates/helm-wavelength-chart/ sites/${{ env.BRANCH }}/wavelength
-           yq eval '.name = "${{ env.BRANCH }}-wavelength"' -i sites/${{ env.BRANCH }}/wavelength/helm-wavelength-chart/Chart.yaml
-
-           echo NAME_ARGOCD_APP_EDGE=$(yq e '.metadata.name' sites/${{ env.BRANCH }}/edge/app.yaml) >> $GITHUB_ENV
-           echo NAME_ARGOCD_APP_REGION=$(yq e '.metadata.name' sites/${{ env.BRANCH }}/region/app.yaml) >> $GITHUB_ENV
-           echo NAME_ARGOCD_APP_WAVELENGTH=$(yq e '.metadata.name' sites/${{ env.BRANCH }}/wavelength/app.yaml) >> $GITHUB_ENV
+#        - name: helm template and store manfiest in the deployment folder - region
+#          env:
+#            ZONE: region
+#          run: |
+#           echo "### helm template and store manfiest in the deployment folder ###"
+#
+#           #!/bin/bash
+#
+#           # to debugging
+#           set -euxo pipefail
+#           # Directory to check
+#           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
+#           # Initialize counter
+#           num_files=0
+#           # Print the paths of the files and the cluster name if a YAML file exists
+#           find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
+#           do
+#               echo "Path: $file"
+#               if [ -f "$file" ]; then
+#                   cluster_name=$(yq e '.clusters[0].name' "$file")
+#                   echo "The cluster name in the YAML file is: $cluster_name"
+#                   helm version
+#                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
+#               fi
+#               ((num_files++))
+#           done
+#           
+#           echo "Found $num_files YAML files in the $dir directory."
+#
+#
+#        - name: helm template and store manfiest in the deployment folder - wavelength
+#          env:
+#            ZONE: wavelength
+#          run: |
+#           echo "### helm template and store manfiest in the deployment folder ###"
+#
+#           #!/bin/bash
+#
+#           # to debugging
+#           set -euxo pipefail
+#           # Directory to check
+#           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
+#           # Initialize counter
+#           num_files=0
+#           # Print the paths of the files and the cluster name if a YAML file exists
+#           find "$dir" -name '*.yaml' -print0 | while IFS= read -r -d '' file
+#           do
+#               echo "Path: $file"
+#               if [ -f "$file" ]; then
+#                   cluster_name=$(yq e '.clusters[0].name' "$file")
+#                   echo "The cluster name in the YAML file is: $cluster_name"
+#                   helm version
+#                   helm template -n $cluster_name templates/helm-${{ env.ZONE }}-chart -f $file > sites/${{ env.BRANCH }}/${{ env.ZONE }}/$cluster_name.yaml
+#               fi
+#               ((num_files++))
+#           done
+#           
+#           echo "Found $num_files YAML files in the $dir directory."
            
         - name: commit changes in 5gplustactile/auto-ztp repository
           run: |
@@ -202,7 +246,7 @@ jobs:
               fi 
            done
 
-        - name: checking iac repository 5gplustactile/iac
+        - name: cloning iac repository 5gplustactile/iac
           uses: actions/checkout@v3
           with:
             repository: '5gplustactile/iac'
@@ -253,31 +297,43 @@ jobs:
             github_token: ${{ secrets.ACCESS_TOKEN }}
 
         - name: argocd edge - pre-deploy
+          env:
+            APPNAME: edge-clusters
           run: |
            argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-           argocd app sync ${{ env.NAME_ARGOCD_APP_EDGE }} --dry-run
+           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
 
         - name: argocd edge - review difference against the target and live state before syncing app
+          env:
+            APPNAME: edge-clusters
           run: |
            argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-           echo "n" | argocd app sync ${{ env.NAME_ARGOCD_APP_EDGE }}  --preview-changes
+           echo "n" | argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }}  --preview-changes
 
-        - name: argocd region - pre-deploy
-          run: |
-           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-           argocd app sync ${{ env.NAME_ARGOCD_APP_REGION }} --dry-run
+#        - name: argocd region - pre-deploy
+#          env:
+#            APPNAME: region-clusters
+#          run: |
+#           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
+#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run#
 
-        - name: argocd region - review difference against the target and live state before syncing app
-          run: |
-           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-           echo "n" | argocd app sync ${{ env.NAME_ARGOCD_APP_REGION }}  --preview-changes
+#        - name: argocd region - review difference against the target and live state before syncing app
+#          env:
+#            APPNAME: region-clusters
+#          run: |
+#           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
+#           echo "n" | argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --preview-changes
 
 #        - name: argocd wavelength - pre-deploy
+#          env:
+#            APPNAME: wavelength-clusters
 #          run: |
 #           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-#           argocd app sync ${{ env.NAME_ARGOCD_APP_WAVELENGTH }} --dry-run
+#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
 #
 #        - name: argocd wavelength - review difference against the target and live state before syncing app
+#          env:
+#            APPNAME: wavelength-clusters
 #          run: |
 #           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-#           echo "n" | argocd app sync ${{ env.NAME_ARGOCD_APP_WAVELENGTH }}  --preview-changes           
+#           echo "n" | argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --preview-changes           
