@@ -432,7 +432,7 @@ jobs:
              export GIT_REPO=${{ secrets.GIT_REPO }}
              while :
              do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
                    echo "app created"
                    exit 0;
                  else
@@ -450,7 +450,7 @@ jobs:
              export GIT_REPO=${{ secrets.GIT_REPO }}
              while :
              do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
                    echo "app created"
                    exit 0;
                  else
@@ -468,13 +468,41 @@ jobs:
              export GIT_REPO=${{ secrets.GIT_REPO }}
              while :
              do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
                    echo "app created"
                    exit 0;
                  else
                   exit 0;
                 fi 
-             done  
+             done
+             
+          - name: appName and useGivenName - edge
+            env:
+              ENVIRON: edge
+              APPNAME: edge-addons
+            run: |
+             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
+             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+
+          - name: appName and useGivenName - region
+            env:
+              ENVIRON: region
+              APPNAME: region-addons
+            run: |
+             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
+             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+
+
+          - name: appName and useGivenName - wavelength
+            env:
+              ENVIRON: wavelength
+              APPNAME: wavelength-addons
+            run: |
+             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
+             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
 
           - name: Setting up cluster-addons - region
             if: env.file_region_is_null == 'false'
@@ -483,6 +511,9 @@ jobs:
               APPNAME: region-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+             
+             set -euxo pipefail
+
              FILE=clusters-${{ env.ENVIRON }}.output
              if [ -f "$FILE" ]; then
                 if [ -s "$FILE" ]; then
@@ -499,8 +530,7 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml \
-                      sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
                       --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
@@ -540,6 +570,9 @@ jobs:
               APPNAME: edge-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+
+             set -euxo pipefail
+
              FILE=clusters-${{ env.ENVIRON }}.output
              if [ -f "$FILE" ]; then
                 if [ -s "$FILE" ]; then
@@ -556,8 +589,7 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml \
-                      sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
                       --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
@@ -596,6 +628,9 @@ jobs:
               APPNAME: wavelength-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+
+             set -euxo pipefail
+
              FILE=clusters-${{ env.ENVIRON }}.output
              if [ -f "$FILE" ]; then
                 if [ -s "$FILE" ]; then
@@ -612,8 +647,7 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml \
-                      sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
                       --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
