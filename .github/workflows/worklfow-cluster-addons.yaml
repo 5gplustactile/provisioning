@@ -421,89 +421,6 @@ jobs:
                 echo "The file $FILE does not exist."
               fi
               
-
-          - name: creating app in argocd - region
-            if: env.file_region_is_null == 'false'
-            env:
-              ENVIRON: region
-            run: |
-             #!/bin/bash
-             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
-             export GIT_REPO=${{ secrets.GIT_REPO }}
-             while :
-             do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
-                   echo "app created"
-                   exit 0;
-                 else
-                  exit 0;
-                fi 
-             done
-            
-          - name: creating app in argocd - edge
-            if: env.file_edge_is_null == 'false'
-            env:
-              ENVIRON: edge
-            run: |
-             #!/bin/bash
-             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
-             export GIT_REPO=${{ secrets.GIT_REPO }}
-             while :
-             do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
-                   echo "app created"
-                   exit 0;
-                 else
-                  exit 0;
-                fi 
-             done
-
-          - name: creating app in argocd - wavelength
-            if: env.file_wavelength_is_null == 'false'
-            env:
-              ENVIRON: wavelength
-            run: |
-             #!/bin/bash
-             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
-             export GIT_REPO=${{ secrets.GIT_REPO }}
-             while :
-             do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
-                   echo "app created"
-                   exit 0;
-                 else
-                  exit 0;
-                fi 
-             done
-             
-          - name: appName and useGivenName - edge
-            env:
-              ENVIRON: edge
-              APPNAME: edge-addons
-            run: |
-             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
-             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
-             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
-
-          - name: appName and useGivenName - region
-            env:
-              ENVIRON: region
-              APPNAME: region-addons
-            run: |
-             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
-             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
-             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
-
-
-          - name: appName and useGivenName - wavelength
-            env:
-              ENVIRON: wavelength
-              APPNAME: wavelength-addons
-            run: |
-             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
-             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
-             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
-
           - name: Setting up cluster-addons - region
             if: env.file_region_is_null == 'false'
             env:
@@ -693,3 +610,93 @@ jobs:
             with:
               branch: main    
               repository: '5gplustactile/auto-ztp'
+
+          - name: cloning iac repository 5gplustactile/iac
+            uses: actions/checkout@v3
+            with:
+              repository: '5gplustactile/iac'
+              ref: main
+              fetch-depth: 0
+              token: ${{ secrets.ACCESS_TOKEN }}
+              
+          - name: creating app in argocd - region
+            if: env.file_region_is_null == 'false'
+            env:
+              ENVIRON: region
+            run: |
+             #!/bin/bash
+             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
+             export GIT_REPO=${{ secrets.GIT_REPO }}
+             while :
+             do
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
+                   echo "app created"
+                   exit 0;
+                 else
+                  exit 0;
+                fi 
+             done
+            
+          - name: creating app in argocd - edge
+            if: env.file_edge_is_null == 'false'
+            env:
+              ENVIRON: edge
+            run: |
+             #!/bin/bash
+             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
+             export GIT_REPO=${{ secrets.GIT_REPO }}
+             while :
+             do
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
+                   echo "app created"
+                   exit 0;
+                 else
+                  exit 0;
+                fi 
+             done
+
+          - name: creating app in argocd - wavelength
+            if: env.file_wavelength_is_null == 'false'
+            env:
+              ENVIRON: wavelength
+            run: |
+             #!/bin/bash
+             export GIT_TOKEN=${{ secrets.ACCESS_TOKEN }}
+             export GIT_REPO=${{ secrets.GIT_REPO }}
+             while :
+             do
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
+                   echo "app created"
+                   exit 0;
+                 else
+                  exit 0;
+                fi 
+             done
+             
+          - name: appName and useGivenName - edge
+            env:
+              ENVIRON: edge
+              APPNAME: edge-addons
+            run: |
+             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
+             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+
+          - name: appName and useGivenName - region
+            env:
+              ENVIRON: region
+              APPNAME: region-addons
+            run: |
+             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
+             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+
+
+          - name: appName and useGivenName - wavelength
+            env:
+              ENVIRON: wavelength
+              APPNAME: wavelength-addons
+            run: |
+             jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+             jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
+             rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
