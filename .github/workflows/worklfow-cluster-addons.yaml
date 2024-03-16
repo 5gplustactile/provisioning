@@ -447,9 +447,9 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
 
                     kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
@@ -506,9 +506,9 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
 
                     kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
@@ -564,9 +564,9 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/dry-run/ad-$c.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
 
                     kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
