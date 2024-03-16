@@ -700,3 +700,18 @@ jobs:
              jq '.appName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.json > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
              jq '.userGivenName="${{ env.BRANCH_DT }}-${{ env.APPNAME }}"' apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/  config_dir.template > apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.json
              rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
+
+
+          - name: commit changes in 5gplustactile/iac repository
+            run: |
+             git config --local user.email "action@github.com"
+             git config --local user.name "GitHub Action"  
+             git add .
+             git commit -a -m "${{ env.CI_COMMIT_MESSAGE }}" --allow-empty
+    
+          - name: push changes in 5gplustactile/iac repository
+            uses: ad-m/github-push-action@master
+            with:
+              branch: main
+              repository: '5gplustactile/iac'
+              github_token: ${{ secrets.ACCESS_TOKEN }}      
