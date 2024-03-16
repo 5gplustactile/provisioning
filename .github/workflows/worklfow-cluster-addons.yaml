@@ -534,7 +534,7 @@ jobs:
        
 
           - name: Setting up cluster-addons - edge
-            if: env.file_region_is_null == 'false'
+            if: env.file_edge_is_null == 'false'
             env:
               ENVIRON: edge
               APPNAME: edge-clusters
@@ -590,7 +590,7 @@ jobs:
               fi 
 
           - name: Setting up cluster-addons - wavelength
-            if: env.file_region_is_null == 'false'
+            if: env.file_wavelength_is_null == 'false'
             env:
               ENVIRON: wavelength
               APPNAME: wavelength-clusters
