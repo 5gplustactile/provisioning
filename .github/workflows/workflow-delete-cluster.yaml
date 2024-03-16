@@ -177,21 +177,38 @@ jobs:
            DIR_EDGE=${{ env.BRANCH_DT }}/edge
            DIR_REGION=${{ env.BRANCH_DT }}/region
            DIR_WAVELENGTH=${{ env.BRANCH_DT }}/wavelength
-           inventory_file="/tmp/inventory.output"
            
-           # Read the inventory file
-           while IFS= read -r file
-           do
-             # Add the .yaml extension to the file name
-             file_with_extension="$file.yaml"
-           
-             # Check if the file exists in the directory
-             if [[ -f "$dir$file_with_extension" ]]; then
-               echo "$file_with_extension exists in $dir"
-             else
-               echo "$file_with_extension does not exist in $dir"
-             fi
-           done < "$inventory_file"
+           # Path to the inventory file
+           inventory_file="/tmp/inventory.output"           
+
+           # Array of directories to check
+           directories=("$DIR_EDGE" "$DIR_REGION" "$DIR_WAVELENGTH")           
+
+           # Iterate over all directories
+           for directory in "${directories[@]}"; do
+             # Iterate over all .yaml files in the current directory
+             for file_path in $directory/*.yaml; do
+               # Extract the base name of the file (without the directory and .yaml extension)
+               base_name=$(basename "$file_path" .yaml)           
+
+               # Check if the base name is in the inventory file
+               if grep -Fxq "$base_name" "$inventory_file"; then
+                 echo "File '$base_name.yaml' exists in both the directory '$directory' and the inventory file."
+               else
+                 echo "File '$base_name.yaml' exists in the directory '$directory' but not in the inventory file."
+                 echo "Deleting files $directory/$base_name.yaml"
+                 rm -rf $directory/$base_name.yaml
+
+                 echo "### login argocd ###"
+                 argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure
+                 echo "### list cluster argocd ###"
+                 argocd cluster list --grpc-web | awk 'NR>1 && $2!="in-cluster" {print $2}' | grep ${{ env.BRANCH_DT }}- > /tmp/argocd-inventory-clusters.output || true
+      
+
+
+               fi
+             done
+           done
 
 
 
