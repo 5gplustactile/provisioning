@@ -630,7 +630,7 @@ jobs:
              export GIT_REPO=${{ secrets.GIT_REPO }}
              while :
              do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
                    echo "app created"
                    exit 0;
                  else
@@ -648,7 +648,7 @@ jobs:
              export GIT_REPO=${{ secrets.GIT_REPO }}
              while :
              do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
                    echo "app created"
                    exit 0;
                  else
@@ -666,7 +666,7 @@ jobs:
              export GIT_REPO=${{ secrets.GIT_REPO }}
              while :
              do
-                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}?ref=main -p addons --type dir --type dir; then
+                if argocd-autopilot app create ${{ env.BRANCH_DT }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons?ref=main -p addons --type dir --type dir; then
                    echo "app created"
                    exit 0;
                  else

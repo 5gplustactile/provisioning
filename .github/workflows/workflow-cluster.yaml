@@ -204,7 +204,7 @@ jobs:
            export GIT_REPO=${{ secrets.GIT_REPO }}
            while :
            do
-              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}?ref=main -p clusters --type dir --type dir; then
+              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}/clusters?ref=main -p clusters --type dir --type dir; then
                  echo "app created"
                  exit 0;
                else
@@ -221,7 +221,7 @@ jobs:
            export GIT_REPO=${{ secrets.GIT_REPO }}
            while :
            do
-              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}?ref=main -p clusters --type dir --type dir; then
+              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}/clusters?ref=main -p clusters --type dir --type dir; then
                  echo "app created"
                  exit 0;
                else
@@ -238,7 +238,7 @@ jobs:
            export GIT_REPO=${{ secrets.GIT_REPO }}
            while :
            do
-              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}?ref=main -p clusters --type dir --type dir; then
+              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}/clusters?ref=main -p clusters --type dir --type dir; then
                  echo "app created"
                  exit 0;
                else
