@@ -683,6 +683,7 @@ jobs:
               token: ${{ secrets.ACCESS_TOKEN }}
                            
           - name: appName and useGivenName - edge
+            if: env.file_edge_is_null == 'false'
             env:
               ENVIRON: edge
               APPNAME: edge-addons
@@ -692,6 +693,7 @@ jobs:
              rm -rf apps/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/config_dir.template
 
           - name: appName and useGivenName - region
+            if: env.file_region_is_null == 'false'
             env:
               ENVIRON: region
               APPNAME: region-addons
@@ -702,6 +704,7 @@ jobs:
 
 
           - name: appName and useGivenName - wavelength
+            if: env.file_wavelength_is_null == 'false'
             env:
               ENVIRON: wavelength
               APPNAME: wavelength-addons
