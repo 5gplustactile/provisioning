@@ -179,7 +179,7 @@ jobs:
            python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
             --path-private-subnet-id=/tmp/private_subnet_ids.json \
             --path-dir=${{ env.BRANCH }}/edge --path-dest=/tmp/${{ env.BRANCH }}/edge \
-            --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/edge/dry-run/ \
+            --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/edge/values-clusters/ \
             --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
             --user-email="action@github.com"
 
@@ -187,7 +187,7 @@ jobs:
            python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
             --path-private-subnet-id=/tmp/private_subnet_ids.json \
             --path-dir=${{ env.BRANCH }}/region --path-dest=/tmp/${{ env.BRANCH }}/region \
-            --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/region/dry-run/ \
+            --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/region/values-clusters/ \
             --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
             --user-email="action@github.com"
 
@@ -195,6 +195,6 @@ jobs:
            #python /tmp/subnets-output.py --path-ot-subnet-id=/tmp/outpost_subnet_ids.json \
            # --path-private-subnet-id=/tmp/private_subnet_ids.json \
            # --path-dir=${{ env.BRANCH }}/wavelength --path-dest=/tmp/${{ env.BRANCH }}/wavelength \
-           # --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/wavelength/dry-run/ \
+           # --path-dest=/tmp/cloned_repo/sites/${{ env.BRANCH }}/wavelength/values-clusters/ \
            # --git-token=${{ secrets.ACCESS_TOKEN }} --git-src=/tmp/ --user-name="GitHub Action" \
            # --user-email="action@github.com"

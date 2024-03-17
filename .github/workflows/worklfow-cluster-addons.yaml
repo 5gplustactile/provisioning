@@ -447,13 +447,13 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
 
                     echo "### content ad-$c.yaml ###"
-                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
+                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
 
                     kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
@@ -471,7 +471,7 @@ jobs:
      
                     echo "### helm template ###"
                     helm template -n addons templates/helm-cluster-addons \
-                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
                       | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
      
                   done
@@ -509,13 +509,13 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
 
                     echo "### content ad-$c.yaml ###"
-                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
+                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
 
                     kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
@@ -533,7 +533,7 @@ jobs:
      
                     echo "### helm template ###"
                     helm template -n addons templates/helm-cluster-addons \
-                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
                       | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
      
                   done
@@ -570,13 +570,13 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
+                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
 
                     echo "### content ad-$c.yaml ###"
-                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
+                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
 
                     kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
@@ -594,7 +594,7 @@ jobs:
      
                     echo "### helm template ###"
                     helm template -n addons templates/helm-cluster-addons \
-                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
+                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
                       | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
      
                   done
