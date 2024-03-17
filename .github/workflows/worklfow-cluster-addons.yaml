@@ -450,7 +450,7 @@ jobs:
                     cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
                       --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
 
                     echo "### content ad-$c.yaml ###"
                     cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
@@ -512,7 +512,7 @@ jobs:
                     cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
                       --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
 
                     echo "### content ad-$c.yaml ###"
                     cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
@@ -573,7 +573,7 @@ jobs:
                     cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                     python templates/cluster-addons/python-addons.py --operation add \
                       --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
+                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
 
                     echo "### content ad-$c.yaml ###"
                     cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
