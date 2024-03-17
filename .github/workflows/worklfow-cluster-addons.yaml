@@ -22,6 +22,7 @@ jobs:
             env:
               GIT_TOKEN: ${{ secrets.ACCESS_TOKEN }}
               GIT_REPO: ${{ secrets.GIT_REPO }}
+              CI_COMMIT_MESSAGE: adding addons
             run: |  
              echo "### install yq ###"
              sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
