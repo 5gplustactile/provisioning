@@ -447,32 +447,38 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
-                    python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
-
-                    echo "### content ad-$c.yaml ###"
-                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
-
-                    kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
-     
-                    export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
-                    #kubectl config view --flatten
-                    kubectl config view --flatten > ~/.kube/config
-                    kubectl config get-contexts
-                   
-                    if argocd cluster add $c -y --upsert; then
-                       echo "cluster added in argocd"
+                    dir=sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons
+                    if [[ -f "$dir/ad-$c.yaml" ]]; then
+                      echo "The file ad-$c.yaml exists in $dir."
                     else
-                       echo "cluster could not be added in argocd" 
-                       exit 1;
-                    fi 
+                      echo "The file ad-$cluster.yaml does not exist in $dir."
+                      cp -p templates/helm-cluster-addons/values_default_region.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
+                      python templates/cluster-addons/python-addons.py --operation add \
+                        --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
+                        --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
+
+                      echo "### content ad-$c.yaml ###"
+                      cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
+
+                      kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
-                    echo "### helm template ###"
-                    helm template -n addons templates/helm-cluster-addons \
-                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
+                      export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
+                      #kubectl config view --flatten
+                      kubectl config view --flatten > ~/.kube/config
+                      kubectl config get-contexts
+                   
+                      if argocd cluster add $c -y --upsert; then
+                        echo "cluster added in argocd"
+                      else
+                        echo "cluster could not be added in argocd" 
+                        exit 1;
+                      fi 
+     
+                      echo "### helm template ###"
+                      helm template -n addons templates/helm-cluster-addons \
+                        -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
+                        | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
+                    fi
      
                   done
                 else
@@ -490,7 +496,7 @@ jobs:
               APPNAME: edge-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
-
+             
              set -euxo pipefail
 
              FILE=clusters-${{ env.ENVIRON }}.output
@@ -509,32 +515,38 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
-                    python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
-
-                    echo "### content ad-$c.yaml ###"
-                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
-
-                    kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
-     
-                    export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
-                    #kubectl config view --flatten
-                    kubectl config view --flatten > ~/.kube/config
-                    kubectl config get-contexts
-                   
-                    if argocd cluster add $c -y --upsert; then
-                       echo "cluster added in argocd"
+                    dir=sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons
+                    if [[ -f "$dir/ad-$c.yaml" ]]; then
+                      echo "The file ad-$c.yaml exists in $dir."
                     else
-                       echo "cluster could not be added in argocd" 
-                       exit 1;
-                    fi 
+                      echo "The file ad-$cluster.yaml does not exist in $dir."
+                      cp -p templates/helm-cluster-addons/values_default_region.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
+                      python templates/cluster-addons/python-addons.py --operation add \
+                        --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
+                        --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
+
+                      echo "### content ad-$c.yaml ###"
+                      cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
+
+                      kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
-                    echo "### helm template ###"
-                    helm template -n addons templates/helm-cluster-addons \
-                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
+                      export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
+                      #kubectl config view --flatten
+                      kubectl config view --flatten > ~/.kube/config
+                      kubectl config get-contexts
+                   
+                      if argocd cluster add $c -y --upsert; then
+                        echo "cluster added in argocd"
+                      else
+                        echo "cluster could not be added in argocd" 
+                        exit 1;
+                      fi 
+     
+                      echo "### helm template ###"
+                      helm template -n addons templates/helm-cluster-addons \
+                        -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
+                        | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
+                    fi
      
                   done
                 else
@@ -542,7 +554,7 @@ jobs:
                 fi
               else
                 echo "The file $FILE does not exist."
-              fi 
+              fi
 
           - name: Setting up cluster-addons - wavelength
             if: env.file_wavelength_is_null == 'false'
@@ -551,7 +563,7 @@ jobs:
               APPNAME: wavelength-clusters
             run: |
              echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
-
+             
              set -euxo pipefail
 
              FILE=clusters-${{ env.ENVIRON }}.output
@@ -570,32 +582,38 @@ jobs:
                     pip install -r templates/cluster-addons/requirements.txt
 
                     echo "### add cluster server $ENDPOINT ###"
-                    cp -p templates/helm-cluster-addons/values_default.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
-                    python templates/cluster-addons/python-addons.py --operation add \
-                      --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
-
-                    echo "### content ad-$c.yaml ###"
-                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
-
-                    kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
-     
-                    export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
-                    #kubectl config view --flatten
-                    kubectl config view --flatten > ~/.kube/config
-                    kubectl config get-contexts
-                   
-                    if argocd cluster add $c -y --upsert; then
-                       echo "cluster added in argocd"
+                    dir=sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons
+                    if [[ -f "$dir/ad-$c.yaml" ]]; then
+                      echo "The file ad-$c.yaml exists in $dir."
                     else
-                       echo "cluster could not be added in argocd" 
-                       exit 1;
-                    fi 
+                      echo "The file ad-$cluster.yaml does not exist in $dir."
+                      cp -p templates/helm-cluster-addons/values_default_region.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
+                      python templates/cluster-addons/python-addons.py --operation add \
+                        --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
+                        --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project addons
+
+                      echo "### content ad-$c.yaml ###"
+                      cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
+
+                      kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
-                    echo "### helm template ###"
-                    helm template -n addons templates/helm-cluster-addons \
-                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
-                      | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
+                      export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
+                      #kubectl config view --flatten
+                      kubectl config view --flatten > ~/.kube/config
+                      kubectl config get-contexts
+                   
+                      if argocd cluster add $c -y --upsert; then
+                        echo "cluster added in argocd"
+                      else
+                        echo "cluster could not be added in argocd" 
+                        exit 1;
+                      fi 
+     
+                      echo "### helm template ###"
+                      helm template -n addons templates/helm-cluster-addons \
+                        -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
+                        | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
+                    fi
      
                   done
                 else
@@ -603,8 +621,8 @@ jobs:
                 fi
               else
                 echo "The file $FILE does not exist."
-              fi 
-
+              fi
+                    
           - name: commit changes in tactile5g-auto-ztp repository
             if: env.file_wavelength_is_null == 'false' || env.file_region_is_null == 'false' || env.file_edge_is_null == 'false'
             run: |
