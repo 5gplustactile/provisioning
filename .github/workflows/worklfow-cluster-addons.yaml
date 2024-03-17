@@ -451,7 +451,7 @@ jobs:
                     if [[ -f "$dir/ad-$c.yaml" ]]; then
                       echo "The file ad-$c.yaml exists in $dir."
                     else
-                      echo "The file ad-$cluster.yaml does not exist in $dir."
+                      echo "The file ad-$c.yaml does not exist in $dir."
                       cp -p templates/helm-cluster-addons/values_default_region.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                       python templates/cluster-addons/python-addons.py --operation add \
                         --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
@@ -519,7 +519,7 @@ jobs:
                     if [[ -f "$dir/ad-$c.yaml" ]]; then
                       echo "The file ad-$c.yaml exists in $dir."
                     else
-                      echo "The file ad-$cluster.yaml does not exist in $dir."
+                      echo "The file ad-$c.yaml does not exist in $dir."
                       cp -p templates/helm-cluster-addons/values_default_region.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                       python templates/cluster-addons/python-addons.py --operation add \
                         --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
@@ -586,7 +586,7 @@ jobs:
                     if [[ -f "$dir/ad-$c.yaml" ]]; then
                       echo "The file ad-$c.yaml exists in $dir."
                     else
-                      echo "The file ad-$cluster.yaml does not exist in $dir."
+                      echo "The file ad-$c.yaml does not exist in $dir."
                       cp -p templates/helm-cluster-addons/values_default_region.yaml sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml
                       python templates/cluster-addons/python-addons.py --operation add \
                         --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/values-addons/ad-$c.yaml \
