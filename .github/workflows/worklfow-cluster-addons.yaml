@@ -620,14 +620,6 @@ jobs:
               branch: main    
               repository: '5gplustactile/auto-ztp'
 
-          - name: cloning iac repository 5gplustactile/iac
-            uses: actions/checkout@v3
-            with:
-              repository: '5gplustactile/iac'
-              ref: main
-              fetch-depth: 0
-              token: ${{ secrets.ACCESS_TOKEN }}
-              
           - name: creating app in argocd - region
             if: env.file_region_is_null == 'false'
             env:
@@ -681,7 +673,15 @@ jobs:
                   exit 0;
                 fi 
              done
-             
+
+          - name: pulling iac repository 5gplustactile/iac
+            uses: actions/checkout@v3
+            with:
+              repository: '5gplustactile/iac'
+              ref: main
+              fetch-depth: 0
+              token: ${{ secrets.ACCESS_TOKEN }}
+                           
           - name: appName and useGivenName - edge
             env:
               ENVIRON: edge
