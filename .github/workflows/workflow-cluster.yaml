@@ -120,7 +120,7 @@ jobs:
           run: |
            echo "### helm template and store manfiest in the deployment folder ###"
            
-           bash -x ./templates/scripts/helm-template.sh -d sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run -e ${{ env.ZONE }} -t ${{ env.BRANCH }}
+           bash -x ./templates/scripts/helm-template.sh -d sites/${{ env.BRANCH }}/${{ env.ZONE }}/values-clusters -e ${{ env.ZONE }} -t ${{ env.BRANCH }}
 
 #        - name: helm template and store manfiest in the deployment folder - region
 #          env:
@@ -133,7 +133,7 @@ jobs:
 #           # to debugging
 #           set -euxo pipefail
 #           # Directory to check
-#           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
+#           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/values-clusters"
 #           # Initialize counter
 #           num_files=0
 #           # Print the paths of the files and the cluster name if a YAML file exists
@@ -163,7 +163,7 @@ jobs:
 #           # to debugging
 #           set -euxo pipefail
 #           # Directory to check
-#           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/dry-run"
+#           dir="sites/${{ env.BRANCH }}/${{ env.ZONE }}/values-clusters"
 #           # Initialize counter
 #           num_files=0
 #           # Print the paths of the files and the cluster name if a YAML file exists
@@ -204,7 +204,7 @@ jobs:
            export GIT_REPO=${{ secrets.GIT_REPO }}
            while :
            do
-              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}?ref=main -p clusters --type dir --type dir; then
+              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}/clusters?ref=main -p clusters --type dir --type dir; then
                  echo "app created"
                  exit 0;
                else
@@ -221,7 +221,7 @@ jobs:
            export GIT_REPO=${{ secrets.GIT_REPO }}
            while :
            do
-              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}?ref=main -p clusters --type dir --type dir; then
+              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}/clusters?ref=main -p clusters --type dir --type dir; then
                  echo "app created"
                  exit 0;
                else
@@ -238,7 +238,7 @@ jobs:
            export GIT_REPO=${{ secrets.GIT_REPO }}
            while :
            do
-              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}?ref=main -p clusters --type dir --type dir; then
+              if argocd-autopilot app create ${{ env.BRANCH }}/${{ env.ENVIRON }} --app github.com/5gplustactile/auto-ztp/sites/${{ env.BRANCH }}/${{ env.ENVIRON }}/clusters?ref=main -p clusters --type dir --type dir; then
                  echo "app created"
                  exit 0;
                else
@@ -301,7 +301,7 @@ jobs:
 #            APPNAME: edge-clusters
 #          run: |
 #           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
+#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --values-clusters
 #
 #        - name: argocd edge - review difference against the target and live state before syncing app
 #          env:
@@ -315,7 +315,7 @@ jobs:
 #            APPNAME: region-clusters
 #          run: |
 #           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run#
+#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --values-clusters#
 
 #        - name: argocd region - review difference against the target and live state before syncing app
 #          env:
@@ -329,7 +329,7 @@ jobs:
 #            APPNAME: wavelength-clusters
 #          run: |
 #           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }}  ${{ env.ARGOCD_HOSTNAME }} --insecure
-#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --dry-run
+#           argocd app sync clusters-${{ env.BRANCH }}-${{ env.APPNAME }} --values-clusters
 #
 #        - name: argocd wavelength - review difference against the target and live state before syncing app
 #          env:
