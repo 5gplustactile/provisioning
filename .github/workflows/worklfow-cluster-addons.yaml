@@ -511,6 +511,9 @@ jobs:
                       --file sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
                       --server "{ \"name\": \"$c\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
 
+                    echo "### content ad-$c.yaml ###"
+                    cat sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml
+
                     kubectl config rename-context ${{ env.APPNAME }}-$c-admin@${{ env.APPNAME }}-$c $c --kubeconfig ~/$c.kubeconfig
      
                     export KUBECONFIG=~/mgmt.kubeconfig:~/$c.kubeconfig
@@ -527,8 +530,7 @@ jobs:
      
                     echo "### helm template ###"
                     helm template -n addons sites/templates/helm-cluster-addons \
-                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml \
-                      | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
+                      -f sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/dry-run/ad-$c.yaml | tee sites/${{ env.BRANCH_DT }}/${{ env.ENVIRON }}/addons/app-$c.yaml
      
                   done
                 else
