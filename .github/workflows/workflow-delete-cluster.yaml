@@ -152,6 +152,14 @@ jobs:
             name: inventory
             path: /tmp/inventory.output
 
+
+        - name: copy files of provisioning repo
+          run: |  
+            echo "### local path ###"
+            ls -lrt          
+            echo "from $PWD. copying provisioning repo to tmp/ directory"     
+            cp -pr . /tmp/
+
         - name: pulling repo 5gplustactile/auto-ztp
           uses: actions/checkout@v3
           with:
@@ -170,14 +178,10 @@ jobs:
             #!/bin/bash
             
             cp inventory.output /tmp/inventory.output
-            # cat /tmp/inventory.output
+            echo "# cat /tmp/inventory.output"
             cat /tmp/inventory.output
             
-            echo "copy provisioning repo to tmp/ directory"
-            
-            echo "location_path = $PWD"
-            cp -pr * /tmp/
-             # Define the directory and the inventory file
+            # Define the directory and the inventory file
             # directories
             DIR_EDGE=/tmp/${{ env.BRANCH_DT }}/edge
             DIR_REGION=/tmp/${{ env.BRANCH_DT }}/region
@@ -224,7 +228,7 @@ jobs:
                       echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
             
                       echo "### install pip dependencies ###"
-                      pip install -r auto-ztp/templates/cluster-addons/requirements.txt
+                      pip install -r templates/cluster-addons/requirements.txt
             
                       echo "### kubeconfig $line edge ###"
                       if ! clusterctl get kubeconfig edge-clusters-$line -n edge-clusters-$line --kubeconfig ~/mgmt.kubeconfig > ~/$line.kubeconfig; then
@@ -235,8 +239,8 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"
               
                         echo "### delete cluster server $ENDPOINT in edge ###"
-                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
-                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$line.yaml \
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$line.yaml \
                         --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
               
                         echo "argocd cluster rm $line -y || true"
@@ -249,8 +253,8 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"  
             
                         echo "### delete cluster server $ENDPOINT in region ###"
-                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
-                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/region/values-addons/ad-$line.yaml \
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/region/values-addons/ad-$line.yaml \
                         --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
             
                         echo "argocd cluster rm $line -y || true"
@@ -264,8 +268,8 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"
               
                         echo "### delete cluster server $ENDPOINT in wavelength ###"
-                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
-                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/wavelength/values-addons/ad-$line.yaml \
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/wavelength/values-addons/ad-$line.yaml \
                         --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
               
                         echo "argocd cluster rm $line -y || true"
