@@ -158,9 +158,10 @@ jobs:
             echo "### local path ###"
             ls -lrt
             echo "-----------------------------"
-            ls -lrt ../          
-            echo "from $PWD. copying provisioning repo to tmp/ directory"     
-            cp -pr . /tmp/
+            mkdir ../tmp/
+            ls -lrt ../
+            echo "from $PWD. copying provisioning repo to ../tmp/ directory"
+            cp -pr . ../tmp/
 
         - name: pulling repo 5gplustactile/auto-ztp
           uses: actions/checkout@v3
@@ -179,15 +180,16 @@ jobs:
           run: |
             #!/bin/bash
             
+            ls -lrt ../
             cp inventory.output /tmp/inventory.output
             echo "# cat /tmp/inventory.output"
             cat /tmp/inventory.output
             
             # Define the directory and the inventory file
             # directories
-            DIR_EDGE=/tmp/${{ env.BRANCH_DT }}/edge
-            DIR_REGION=/tmp/${{ env.BRANCH_DT }}/region
-            DIR_WAVELENGTH=/tmp/${{ env.BRANCH_DT }}/wavelength
+            DIR_EDGE=../tmp/${{ env.BRANCH_DT }}/edge
+            DIR_REGION=../tmp/${{ env.BRANCH_DT }}/region
+            DIR_WAVELENGTH=../tmp/${{ env.BRANCH_DT }}/wavelength
             
              # Path to the inventory file
             inventory_file="/tmp/inventory.output"
