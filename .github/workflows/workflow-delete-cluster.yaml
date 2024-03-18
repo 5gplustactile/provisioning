@@ -152,6 +152,14 @@ jobs:
             name: inventory
             path: /tmp/inventory.output
 
+
+        - name: copy files of provisioning repo
+          run: |  
+            echo "### local path ###"
+            ls -lrt          
+            echo "from $PWD. copying provisioning repo to tmp/ directory"     
+            cp -pr . /tmp/
+
         - name: pulling repo 5gplustactile/auto-ztp
           uses: actions/checkout@v3
           with:
@@ -170,14 +178,10 @@ jobs:
             #!/bin/bash
             
             cp inventory.output /tmp/inventory.output
-            # cat /tmp/inventory.output
+            echo "# cat /tmp/inventory.output"
             cat /tmp/inventory.output
             
-            echo "copy provisioning repo to tmp/ directory"
-            
-            echo "location_path = $PWD"
-            cp -pr * /tmp/
-             # Define the directory and the inventory file
+            # Define the directory and the inventory file
             # directories
             DIR_EDGE=/tmp/${{ env.BRANCH_DT }}/edge
             DIR_REGION=/tmp/${{ env.BRANCH_DT }}/region
