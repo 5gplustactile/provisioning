@@ -30,9 +30,9 @@ jobs:
             SSH_PRIV_KEY: ${{ secrets.SSH_PRIV_KEY }}            
 
     cluster_addons:
-#        needs: checking
+        needs: checking
         if: github.event.pull_request.merged == true
-        uses: 5gplustactile/provisioning/.github/workflows/worklfow-cluster-addons.yaml@main
+        uses: 5gplustactile/provisioning/.github/workflows/worklfow-cluster-addons.yaml@cicd
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
