@@ -167,111 +167,119 @@ jobs:
 
         - name: inventory clusters
           run: |
-           mv inventory.output /tmp/inventory.output
-           # cat /tmp/inventory.output
-           cat /tmp/inventory.output 
-           #!/bin/bash
-           
-           # Define the directory and the inventory file
-           # directories
-           DIR_EDGE=${{ env.BRANCH_DT }}/edge
-           DIR_REGION=${{ env.BRANCH_DT }}/region
-           DIR_WAVELENGTH=${{ env.BRANCH_DT }}/wavelength
-           
-           # Path to the inventory file
-           inventory_file="/tmp/inventory.output"           
-
-           # Array of directories to check
-           directories=("$DIR_EDGE" "$DIR_REGION" "$DIR_WAVELENGTH")           
-
-           # Iterate over all directories
-           for directory in "${directories[@]}"; do
-             # Iterate over all .yaml files in the current directory
-             for file_path in $directory/*.yaml; do
-               # Extract the base name of the file (without the directory and .yaml extension)
-               base_name=$(basename "$file_path" .yaml)           
-
-               # Check if the base name is in the inventory file
-               if grep -Fxq "$base_name" "$inventory_file"; then
-                 echo "File '$base_name.yaml' exists in both the directory '$directory' and the inventory file."
-               else
-                 echo "File '$base_name.yaml' exists in the directory '$directory' but not in the inventory file."
-                 echo "Deleting files $directory/$base_name.yaml"
-                 rm -rf $directory/$base_name.yaml
-
-                 echo "### login argocd ###"
-                 argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure
-                 echo "### list cluster argocd ###"
-                 argocd cluster list --grpc-web | awk 'NR>1 && $2!="in-cluster" {print $2}' | grep ${{ env.BRANCH_DT }}- > /tmp/argocd-inventory-clusters.output || true
-      
-
-
-               fi
-             done
-           done
-
-
-
-
-           echo "### login argocd ###"
-           argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} ${{ secrets.ARGOCD_HOSTNAME }} --insecure
-           echo "### list cluster argocd ###"
-           argocd cluster list --grpc-web | awk 'NR>1 && $2!="in-cluster" {print $2}' | grep ${{ env.BRANCH_DT }}- > /tmp/argocd-inventory-clusters.output || true
-
-           echo "### cat /tmp/argocd-inventory-clusters.output ###"
-           cat /tmp/argocd-inventory-clusters.output
-           
-           # check if file empty
-           if [ -s /tmp/argocd-inventory-clusters.output ]; then
-              echo "ARGOCD_INVENTORY_IS_EMPTY=false"
-              echo "ARGOCD_INVENTORY_IS_EMPTY=false" >> $GITHUB_ENV
-           else
-              echo "ARGOCD_INVENTORY_IS_EMPTY=true"
-              echo "ARGOCD_INVENTORY_IS_EMPTY=true" >> $GITHUB_ENV
-           fi
-
-           IFS=$'\n'
-           for line in $(cat /tmp/argocd-inventory-clusters.output)
-           do
-             trimmed_line=$(echo "$line" | tr -d '[:space:]')
-             if grep -Fxiq "$trimmed_line" /tmp/inventory.output
-             then
-               echo "cluster $line synced in argocd and git"
-             else
-               echo "cluster $line is out of synced, exists in argocd but not in git and must be deleted from argocd"
-               echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
-               
-               clusterctl get kubeconfig $line -n $line --kubeconfig ~/mgmt.kubeconfig > ~/$line.kubeconfig
-               export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$line.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
-               echo "ENDPOINT=$ENDPOINT"
-               
-               echo "### install pip dependencies ###"
-               pip install -r templates/cluster-addons/requirements.txt
-
-               echo "### delete cluster server $ENDPOINT ###"
-               echo "### edge ###"
-               python templates/cluster-addons/python-addons.py --operation delete \
-               --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
-               --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
-
-               echo "### region ###"
-               python templates/cluster-addons/python-addons.py --operation delete \
-               --file sites/${{ env.BRANCH_DT }}/region/addons/helm-cluster-addons/values.yaml \
-               --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
-
-               echo "### wavelength ###"
-               python templates/cluster-addons/python-addons.py --operation delete \
-               --file sites/${{ env.BRANCH_DT }}/wavelength/addons/helm-cluster-addons/values.yaml \
-               --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project ${{ env.BRANCH_DT }}
-
-               kubectl delete cluster -n $line $line --kubeconfig ~/mgmt.kubeconfig
-               argocd cluster rm $line -y || true
-               kubectl delete ns $line --kubeconfig ~/mgmt.kubeconfig &
-               
-             fi
-           done
-           unset IFS
-   
+            #!/bin/bash
+            
+            cp inventory.output /tmp/inventory.output
+            # cat /tmp/inventory.output
+            cat /tmp/inventory.output
+            
+            echo "copy provisioning repo to tmp/ directory"
+            
+            echo "location_path = $PWD"
+            cp -pr * /tmp/
+             # Define the directory and the inventory file
+            # directories
+            DIR_EDGE=/tmp/${{ env.BRANCH_DT }}/edge
+            DIR_REGION=/tmp/${{ env.BRANCH_DT }}/region
+            DIR_WAVELENGTH=/tmp/${{ env.BRANCH_DT }}/wavelength
+            
+             # Path to the inventory file
+            inventory_file="/tmp/inventory.output"
+            
+             # Array of directories to check
+            directories=("$DIR_EDGE" "$DIR_REGION" "$DIR_WAVELENGTH")
+            
+             # Iterate over all directories
+            for directory in "${directories[@]}"; do
+              # Iterate over all .yaml files in the current directory
+              for file_path in $directory/*.yaml; do
+                # Extract the base name of the file (without the directory and .yaml extension)
+                base_name=$(basename "$file_path" .yaml)
+            
+                 # Check if the base name is in the inventory file
+                if grep -Fxq "$base_name" "$inventory_file"; then
+                  echo "File '$base_name.yaml' exists in both the directory '$directory' and the inventory file."
+                else
+                  echo "File '$base_name.yaml' exists in the directory '$directory' but not in the inventory file."
+                  echo "Deleting files $directory/$base_name.yaml"
+                  echo "rm -rf $directory/$base_name.yaml"
+                  rm -rf $directory/$base_name.yaml
+            
+                  echo "### login argocd ###"
+                  argocd login --username admin --password oaNstMH2p3YKlKnR internal-argocd-https-1137655741.eu-west-3.elb.amazonaws.com --insecure
+                  echo "### list cluster argocd ###"
+                  argocd cluster list --grpc-web | awk 'NR>1 && $2!="in-cluster" {print $2}' > /tmp/argocd-inventory-clusters.output || true
+            
+                  echo "### cat /tmp/argocd-inventory-clusters.output ###"
+                  cat /tmp/argocd-inventory-clusters.output
+                  IFS=$'\n'
+                  for line in $(cat /tmp/argocd-inventory-clusters.output)
+                  do
+                    trimmed_line=$(echo "$line" | tr -d '[:space:]')
+                    if grep -Fxiq "$trimmed_line" /tmp/inventory.output
+                    then
+                      echo "cluster $line synced in argocd and git"
+                    else
+                      echo "cluster $line is out of synced, exists in argocd but not in git and must be deleted from argocd"
+                      echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+            
+                      echo "### install pip dependencies ###"
+                      pip install -r auto-ztp/templates/cluster-addons/requirements.txt
+            
+                      echo "### kubeconfig $line edge ###"
+                      if ! clusterctl get kubeconfig edge-clusters-$line -n edge-clusters-$line --kubeconfig ~/mgmt.kubeconfig > ~/$line.kubeconfig; then
+                        echo "Failed to get kubeconfig for $line in edge environment. Skipping..."
+                      
+                      else
+                        export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$line.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                        echo "ENDPOINT=$ENDPOINT"
+              
+                        echo "### delete cluster server $ENDPOINT in edge ###"
+                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
+                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$line.yaml \
+                        --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
+              
+                        echo "argocd cluster rm $line -y || true"
+                        #argocd cluster rm $line -y || true
+                      fi 
+                      if ! clusterctl get kubeconfig region-clusters-$line -n region-clusters-$line --kubeconfig ~/mgmt.kubeconfig > ~/$line.kubeconfig; then
+                          echo "Failed to get kubeconfig for $line in region environment. Skipping..."
+                      else
+                        export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$line.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                        echo "ENDPOINT=$ENDPOINT"  
+            
+                        echo "### delete cluster server $ENDPOINT in region ###"
+                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
+                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/region/values-addons/ad-$line.yaml \
+                        --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
+            
+                        echo "argocd cluster rm $line -y || true"
+                        #argocd cluster rm $line -y || true 
+                      fi
+                      
+                      if ! clusterctl get kubeconfig wavelenght-clusters-$line -n wavelength-clusters-$line --kubeconfig ~/mgmt.kubeconfig > ~/$line.kubeconfig; then
+                        echo "Failed to get kubeconfig for $line in wavelength environment. Skipping..."
+                      else
+                        export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$line.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                        echo "ENDPOINT=$ENDPOINT"
+              
+                        echo "### delete cluster server $ENDPOINT in wavelength ###"
+                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
+                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/wavelength/values-addons/ad-$line.yaml \
+                        --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
+              
+                        echo "argocd cluster rm $line -y || true"
+                        #argocd cluster rm $line -y || true          
+            
+                      fi
+                      
+                   fi
+                  done
+                  unset IFS
+                fi
+              done
+            done
+  
         - name: commit changes in 5gplustactile/auto-ztp repository
           run: |
            git config --local user.email "action@github.com"
