@@ -3,4 +3,5 @@ clusters:
     masterNodes: 1
     workerNodes: 1
     version: v1.25.0
-    subnetRegion: {} # private subnets of the each digital twins
+    subnetOutpost: {}
+    subnetRegion: {}
