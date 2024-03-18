@@ -181,7 +181,6 @@ jobs:
             #!/bin/bash
             
             ls -lrt ../
-            cp inventory.output /tmp/inventory.output
             echo "# cat /tmp/inventory.output"
             cat /tmp/inventory.output
             
