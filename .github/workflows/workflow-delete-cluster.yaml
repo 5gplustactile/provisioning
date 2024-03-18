@@ -156,7 +156,9 @@ jobs:
         - name: copy files of provisioning repo
           run: |  
             echo "### local path ###"
-            ls -lrt          
+            ls -lrt
+            echo "-----------------------------"
+            ls -lrt ../          
             echo "from $PWD. copying provisioning repo to tmp/ directory"     
             cp -pr . /tmp/
 
