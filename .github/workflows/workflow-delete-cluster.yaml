@@ -224,7 +224,7 @@ jobs:
                       echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
             
                       echo "### install pip dependencies ###"
-                      pip install -r auto-ztp/templates/cluster-addons/requirements.txt
+                      pip install -r templates/cluster-addons/requirements.txt
             
                       echo "### kubeconfig $line edge ###"
                       if ! clusterctl get kubeconfig edge-clusters-$line -n edge-clusters-$line --kubeconfig ~/mgmt.kubeconfig > ~/$line.kubeconfig; then
@@ -235,8 +235,8 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"
               
                         echo "### delete cluster server $ENDPOINT in edge ###"
-                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
-                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$line.yaml \
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$line.yaml \
                         --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
               
                         echo "argocd cluster rm $line -y || true"
@@ -249,8 +249,8 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"  
             
                         echo "### delete cluster server $ENDPOINT in region ###"
-                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
-                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/region/values-addons/ad-$line.yaml \
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/region/values-addons/ad-$line.yaml \
                         --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
             
                         echo "argocd cluster rm $line -y || true"
@@ -264,8 +264,8 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"
               
                         echo "### delete cluster server $ENDPOINT in wavelength ###"
-                        python auto-ztp/templates/cluster-addons/python-addons.py --operation delete \
-                        --file auto-ztp/sites/${{ env.BRANCH_DT }}/wavelength/values-addons/ad-$line.yaml \
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/wavelength/values-addons/ad-$line.yaml \
                         --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
               
                         echo "argocd cluster rm $line -y || true"
