@@ -1,9 +1,0 @@
-clusters:
-#  - name: example-region-0
-#    masterNodes: 1
-#    workerNodes: 1
-#    version: v1.25.0
-#    subnetRegion: # private subnets of the each digital twins
-#      - subnet-068cfcd11758c84b2
-#      - subnet-05fd13df632893f8b
-#      - subnet-0ad5fa11cd86a23a6
