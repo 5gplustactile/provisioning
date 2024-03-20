@@ -1,7 +1,7 @@
 clusters:
   - name: example-in-edge
-    masterNodes: 1
-    workerNodes: 1
+    masterNodes: 2
+    workerNodes: 2
     version: v1.25.0
     subnetOutpost: {}
     subnetRegion: {}
