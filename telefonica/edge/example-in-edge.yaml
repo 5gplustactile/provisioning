@@ -1,6 +1,6 @@
 clusters:
   - name: example-in-edge
-    masterNodes: 2
+    masterNodes: 3
     workerNodes: 2
     version: v1.25.0
     subnetOutpost: {}
