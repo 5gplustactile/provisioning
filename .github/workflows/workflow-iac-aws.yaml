@@ -136,33 +136,6 @@ jobs:
             fetch-depth: 0
             token: ${{ secrets.ACCESS_TOKEN }}
 
-        - name: Install Terrascan
-          run: |
-            curl -L "$(curl -s https://api.github.com/repos/accurics/terrascan/releases/latest | grep -o -E "https://.+?_Linux_x86_64.tar.gz")" > terrascan.tar.gz
-            tar -xf terrascan.tar.gz terrascan
-            sudo mv terrascan /usr/local/bin
-            rm terrascan.tar.gz
-
-        - name: Run Terrascan
-          id: terrascan
-          uses: tenable/terrascan-action@main
-          with:
-            iac_type: 'terraform'
-            iac_version: 'v14'
-            policy_type: 'aws'
-            only_warn: true
-            sarif_upload: false
-            iac_dir: tf-modules/subnets/
-           #non_recursive:
-           #policy_path:
-           #skip_rules:
-           #config_path:
-  
-#        - name: Upload SARIF file
-#          uses: github/codeql-action/upload-sarif@v1
-#          with:
-#            sarif_file: terrascan.sarif
-
         - name: Upload subnets-output.py
           uses: actions/upload-artifact@v2
           with:
