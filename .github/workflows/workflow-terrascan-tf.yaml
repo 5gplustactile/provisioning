@@ -18,7 +18,7 @@ jobs:
             fetch-depth: 0
             token: ${{ secrets.ACCESS_TOKEN }}          
 
-        - name: Run Terrascan - subnets
+        - name: Run Terrascan - eni-lni
           id: terrascan_subnets
           uses: tenable/terrascan-action@main
           with:
