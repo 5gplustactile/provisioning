@@ -16,9 +16,9 @@ jobs:
             repository: '5gplustactile/auto-ztp'
             ref: ${{ github.head_ref }}
             fetch-depth: 0
-            token: ${{ secrets.ACCESS_TOKEN }}          
+            token: ${{ secrets.ACCESS_TOKEN }}
 
-        - name: Run Terrascan - eni-lni
+        - name: Run Terrascan - subnets
           id: terrascan_subnets
           uses: tenable/terrascan-action@main
           with:
@@ -39,7 +39,7 @@ jobs:
 #          with:
 #            sarif_file: terrascan_subnets.sarif
 
-        - name: Run Terrascan - subnets
+        - name: Run Terrascan - eni-lni-op
           id: terrascan_eni_lni
           uses: tenable/terrascan-action@main
           with:
