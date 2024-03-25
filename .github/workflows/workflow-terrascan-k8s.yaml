@@ -18,11 +18,19 @@ jobs:
             fetch-depth: 0
             token: ${{ secrets.ACCESS_TOKEN }}          
 
+        # extract branch name
+        - name: Extract branch name
+          shell: bash
+          run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          id: extract_branch
+
+        - name: Get branch name
+          run: echo 'The branch name is' ${{ steps.extract_branch.outputs.branch }}
 
         - name: Getting variable branch
           run: |
            echo "BRANCH=$(echo ${{ steps.extract_branch.outputs.branch }} | cut -d/ -f2)" >> $GITHUB_ENV
-  
+
         - name: Run Terrascan - edge ${{ env.BRANCH }}
           env:
             ZONE: edge
