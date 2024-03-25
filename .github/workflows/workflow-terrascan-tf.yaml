@@ -1,0 +1,40 @@
+name: terrascan vulnerabilities
+on:
+  workflow_call:
+    secrets:
+      ACCESS_TOKEN:
+        required: true
+
+jobs:
+    terrascan_vulns:
+        name: terrascan_vulns
+        runs-on: self-hosted
+        steps:
+        - name: pulling repo 5gplustactile/auto-ztp
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/auto-ztp'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}          
+
+        - name: Run Terrascan
+          id: terrascan
+          uses: tenable/terrascan-action@main
+          with:
+            iac_type: 'terraform'
+            iac_version: 'v14'
+            policy_type: 'aws'
+            only_warn: true
+            sarif_upload: false
+            iac_dir: tf-modules/subnets/
+            verbose: true
+           #non_recursive:
+           #policy_path:
+           #skip_rules:
+           #config_path:          
+
+#        - name: Upload SARIF file
+#          uses: github/codeql-action/upload-sarif@v1
+#          with:
+#            sarif_file: terrascan.sarif

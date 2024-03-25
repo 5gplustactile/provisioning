@@ -5,8 +5,15 @@ on:
           - 'dt/**'
 
 jobs:
+
+    infrastructure_vulnerability_scanning:
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-terrascan-tf.yaml@cicd
+        secrets:
+            ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+
     iac:
         uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-aws.yaml@cicd
+        needs: infrastructure_vulnerability_scanning
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             OPS_AWS_ACCESS_KEY_ID: ${{ secrets.OPS_AWS_ACCESS_KEY_ID }}
@@ -23,3 +30,9 @@ jobs:
             ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
             ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
             GIT_REPO: ${{ secrets.GIT_REPO }}
+
+    cluster_vulnerability_scanning:
+        needs: cluster_as_code
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-terrascan-k8s.yaml@cicd
+        secrets:
+            ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

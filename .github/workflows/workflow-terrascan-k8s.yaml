@@ -1,0 +1,101 @@
+name: terrascan vulnerabilities
+on:
+  workflow_call:
+    secrets:
+      ACCESS_TOKEN:
+        required: true
+
+jobs:
+    terrascan_k8s:
+        name: terrascan_k8s
+        runs-on: self-hosted
+        steps:
+        - name: pulling repo 5gplustactile/auto-ztp
+          uses: actions/checkout@v3
+          with:
+            repository: '5gplustactile/auto-ztp'
+            ref: ${{ github.head_ref }}
+            fetch-depth: 0
+            token: ${{ secrets.ACCESS_TOKEN }}          
+
+        # extract branch name
+        - name: Extract branch name
+          shell: bash
+          run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+          id: extract_branch
+
+        - name: Get branch name
+          run: echo 'The branch name is' ${{ steps.extract_branch.outputs.branch }}
+
+        - name: Getting variable branch
+          run: |
+           echo "BRANCH=$(echo ${{ steps.extract_branch.outputs.branch }} | cut -d/ -f2)" >> $GITHUB_ENV
+
+        - name: Run Terrascan - edge ${{ env.BRANCH }}
+          env:
+            ZONE: edge
+          id: terrascan_edge
+          uses: tenable/terrascan-action@main
+          with:
+            iac_type: 'k8s'
+            iac_version: 'v1'
+            policy_type: 'k8s'
+            only_warn: true
+            sarif_upload: false
+            iac_dir: sites/${{ env.BRANCH }}/${{ env.ZONE }}/clusters/
+            verbose: true
+           #non_recursive:
+           #policy_path:
+           #skip_rules:
+           #config_path:          
+
+#        - name: Upload SARIF file
+#          uses: github/codeql-action/upload-sarif@v1
+#          with:
+#            sarif_file: terrascan_edge.sarif
+
+        - name: Run Terrascan - region ${{ env.BRANCH }}
+          env:
+            ZONE: region
+          id: terrascan_region
+          uses: tenable/terrascan-action@main
+          with:
+            iac_type: 'k8s'
+            iac_version: 'v1'
+            policy_type: 'k8s'
+            only_warn: true
+            sarif_upload: false
+            iac_dir: sites/${{ env.BRANCH }}/${{ env.ZONE }}/clusters/
+            verbose: true
+           #non_recursive:
+           #policy_path:
+           #skip_rules:
+           #config_path:          
+
+#        - name: Upload SARIF file
+#          uses: github/codeql-action/upload-sarif@v1
+#          with:
+#            sarif_file: terrascan_region.sarif
+
+        - name: Run Terrascan - wavelength ${{ env.BRANCH }}
+          env:
+            ZONE: wavelength
+          id: terrascan_wavelength
+          uses: tenable/terrascan-action@main
+          with:
+            iac_type: 'k8s'
+            iac_version: 'v1'
+            policy_type: 'k8s'
+            only_warn: true
+            sarif_upload: false
+            iac_dir: sites/${{ env.BRANCH }}/${{ env.ZONE }}/clusters/
+            verbose: true
+           #non_recursive:
+           #policy_path:
+           #skip_rules:
+           #config_path:          
+
+#        - name: Upload SARIF file
+#          uses: github/codeql-action/upload-sarif@v1
+#          with:
+#            sarif_file: terrascan_wavelength.sarif
