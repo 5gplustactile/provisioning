@@ -28,6 +28,7 @@ jobs:
             only_warn: true
             sarif_upload: false
             iac_dir: tf-modules/subnets/
+            verbose: true
            #non_recursive:
            #policy_path:
            #skip_rules:
