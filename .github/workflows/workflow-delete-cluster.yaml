@@ -101,7 +101,7 @@ jobs:
         - name: copy provisioning repo to temporal folder
           run: |
             echo "# temporal folder tmp_provisioning"
-            mkdir ../tmp_provsioning/
+            mkdir ../tmp_provisioning/
             cp -pr . ../tmp_provisioning/
             ls -lrt ../tmp_provisioning
  
@@ -115,16 +115,53 @@ jobs:
           
         - name: copy auto-ztp repo to temporal folder
           run: |
-            echo "# temporal folder tmp_auto-ztp"
-            mkdir ../tmp_auto-ztp/
-            cp -pr . ../tmp_auto-ztp/
-            ls -lrt ../tmp_auto-ztp
+            #!/bin/bash
+            
+            # Directories to compare
+            dirs1=("../tmp_provisioning/${{ env.BRANCH_DT }}/edge" "provisioning/${{ env.BRANCH_DT }}/region" "provisioning/${{ env.BRANCH_DT }}/wavelength")
+            dirs2=("sites/${{ env.BRANCH_DT }}/edge/clusters" "sites/${{ env.BRANCH_DT }}/region/clusters" "sites/${{ env.BRANCH_DT }}/wavelength/clusters")
+            dirs2=("sites/${{ env.BRANCH_DT }}/edge/clusters" "sites/${{ env.BRANCH_DT }}/region/clusters" "sites/${{ env.BRANCH_DT }}/wavelength/clusters")
+            
+            # Compare file names in each pair of directories
+            for i in ${!dirs1[@]}; do
+              # Find .yaml files in the directories
+              files1=($(find ${dirs1[$i]} -name "*.yaml"))
+              files2=($(find ${dirs2[$i]} -name "*.yaml"))
+            
+              echo "Checking files in ${dirs1[$i]} and ${dirs2[$i]}"
+            
+              # Check for files in dirs1 that are also in dirs2
+              for file1 in "${files1[@]}"; do
+                for file2 in "${files2[@]}"; do
+                  if [ "$(basename $file1)" == "$(basename $file2)" ]; then
+                    echo "Same file found: $(basename $file1)"
+                  fi
+                done
+              done
+            
+              # Check for files in dirs2 that are not in dirs1
+              for file2 in "${files2[@]}"; do
+                found=false
+                for file1 in "${files1[@]}"; do
+                  if [ "$(basename $file1)" == "$(basename $file2)" ]; then
+                    found=true
+                    break
+                  fi
+                done
+                if [ "$found" = false ]; then
+                  echo "File found in ${dirs2[$i]} but not in ${dirs1[$i]}: $(basename $file2)"
+                  #rm -rf ${dirs2[$i]}/$(basename $file2)
 
-        - name: list ../tmp folders
-          run: |
-            ls -lrt ../
-            echo "# . path"
-            ls -lrt
+                  echo "### login argocd ###"
+                  argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} internal-argocd-https-1137655741.eu-west-3.elb.amazonaws.com --insecure
+                  echo "### list cluster argocd ###"
+                  argocd cluster list --grpc-web | awk 'NR>1 && $2!="in-cluster" {print $2}' | grep "$file_path" > /tmp/argocd-inventory-clusters.output || true
+
+                fi
+              done
+            done
+
+            ## buscar el nombre de los clusters en cluster["name"]
 
 
 
