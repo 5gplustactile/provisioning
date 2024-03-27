@@ -30,8 +30,8 @@ jobs:
             SSH_PRIV_KEY: ${{ secrets.SSH_PRIV_KEY }}            
 
     cluster_addons:
-#        needs: checking
-        needs: iac
+        needs: checking
+#        needs: iac
         if: github.event.pull_request.merged == true
         uses: 5gplustactile/provisioning/.github/workflows/worklfow-cluster-addons.yaml@cicd
         secrets:
