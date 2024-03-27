@@ -210,7 +210,7 @@ jobs:
                   echo "File '$base_name.yaml' exists in the directory '$directory' but not in the inventory file."
                   echo "Deleting files $directory/$base_name.yaml"
                   echo "rm -rf $directory/$base_name.yaml"
-                  rm -rf $directory/$base_name.yaml
+                  #rm -rf $directory/$base_name.yaml
             
                   echo "### login argocd ###"
                   argocd login --username admin --password oaNstMH2p3YKlKnR internal-argocd-https-1137655741.eu-west-3.elb.amazonaws.com --insecure
@@ -242,9 +242,9 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"
               
                         echo "### delete cluster server $ENDPOINT in edge ###"
-                        python templates/cluster-addons/python-addons.py --operation delete \
-                        --file sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$line.yaml \
-                        --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
+                        #python templates/cluster-addons/python-addons.py --operation delete \
+                        #--file sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$line.yaml \
+                        #--server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
               
                         echo "argocd cluster rm $line -y || true"
                         #argocd cluster rm $line -y || true
@@ -256,9 +256,9 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"  
             
                         echo "### delete cluster server $ENDPOINT in region ###"
-                        python templates/cluster-addons/python-addons.py --operation delete \
-                        --file sites/${{ env.BRANCH_DT }}/region/values-addons/ad-$line.yaml \
-                        --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
+                        #python templates/cluster-addons/python-addons.py --operation delete \
+                        #--file sites/${{ env.BRANCH_DT }}/region/values-addons/ad-$line.yaml \
+                        #--server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
             
                         echo "argocd cluster rm $line -y || true"
                         #argocd cluster rm $line -y || true 
@@ -271,9 +271,9 @@ jobs:
                         echo "ENDPOINT=$ENDPOINT"
               
                         echo "### delete cluster server $ENDPOINT in wavelength ###"
-                        python templates/cluster-addons/python-addons.py --operation delete \
-                        --file sites/${{ env.BRANCH_DT }}/wavelength/values-addons/ad-$line.yaml \
-                        --server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
+                        #python templates/cluster-addons/python-addons.py --operation delete \
+                        #--file sites/${{ env.BRANCH_DT }}/wavelength/values-addons/ad-$line.yaml \
+                        #--server "{ \"name\": \"$line\", \"url\": \"$ENDPOINT\" }" --project addons
               
                         echo "argocd cluster rm $line -y || true"
                         #argocd cluster rm $line -y || true          
@@ -287,16 +287,16 @@ jobs:
               done
             done
   
-        - name: commit changes in 5gplustactile/auto-ztp repository
-          run: |
-           git config --local user.email "action@github.com"
-           git config --local user.name "GitHub Action"  
-           git add .
-           git commit -a -m "${{ env.CI_COMMIT_MESSAGE }}" --allow-empty
-  
-        - name: push changes in 5gplustactile/auto-ztp repository
-          uses: ad-m/github-push-action@master
-          with:
-            branch: main
-            repository: '5gplustactile/auto-ztp'
-            github_token: ${{ secrets.ACCESS_TOKEN }}
+#        - name: commit changes in 5gplustactile/auto-ztp repository
+#          run: |
+#           git config --local user.email "action@github.com"
+#           git config --local user.name "GitHub Action"  
+#           git add .
+#           git commit -a -m "${{ env.CI_COMMIT_MESSAGE }}" --allow-empty
+#  
+#        - name: push changes in 5gplustactile/auto-ztp repository
+#          uses: ad-m/github-push-action@master
+#          with:
+#            branch: main
+#            repository: '5gplustactile/auto-ztp'
+#            github_token: ${{ secrets.ACCESS_TOKEN }}
