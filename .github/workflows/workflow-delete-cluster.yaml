@@ -156,7 +156,7 @@ jobs:
                   argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} internal-argocd-https-1137655741.eu-west-3.elb.amazonaws.com --insecure
 
                   # get the name of cluster
-                  CLUSTER_TO_DELETE=$(yq e '.clusters[].name' dirs2[$i]}/$(basename $file2))
+                  CLUSTER_TO_DELETE=$(yq e '.clusters[].name' ${dirs2[$i]}/$(basename $file2))
                   echo CLUSTER_TO_DELETE=$CLUSTER_TO_DELETE
 
                   echo "cluster $CLUSTER_TO_DELETE is out of synced, exists in argocd but not in git provisioning repo and must be deleted from argocd"
