@@ -118,7 +118,7 @@ jobs:
             #!/bin/bash
             
             # Directories to compare
-            dirs1=("../tmp_provisioning/${{ env.BRANCH_DT }}/edge" "provisioning/${{ env.BRANCH_DT }}/region" "provisioning/${{ env.BRANCH_DT }}/wavelength")
+            dirs1=("../tmp_provisioning/${{ env.BRANCH_DT }}/edge" "../tmp_provisioning/${{ env.BRANCH_DT }}/region" "../tmp_provisioning/${{ env.BRANCH_DT }}/wavelength")
             dirs2=("sites/${{ env.BRANCH_DT }}/edge/clusters" "sites/${{ env.BRANCH_DT }}/region/clusters" "sites/${{ env.BRANCH_DT }}/wavelength/clusters")
             dirs2=("sites/${{ env.BRANCH_DT }}/edge/clusters" "sites/${{ env.BRANCH_DT }}/region/clusters" "sites/${{ env.BRANCH_DT }}/wavelength/clusters")
             
