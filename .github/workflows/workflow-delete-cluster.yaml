@@ -188,6 +188,11 @@ jobs:
                         echo "deleting file about of cluster"
                         rm -rf ${dirs2[$i]}/$(basename $file2)
 
+                        echo "deleting addons files about of cluster"
+                        rm -rf sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$CLUSTER_TO_DELETE.yaml
+                        rm -rf sites/${{ env.BRANCH_DT }}/edge/values-addons/app-$CLUSTER_TO_DELETE.yaml
+
+
                         echo "deleting cluster from argocd"
                         argocd cluster rm $CLUSTER_TO_DELETE -y || true
 
@@ -210,7 +215,11 @@ jobs:
                         --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
 
                         echo "deleting file about of cluster"
-                        rm -rf ${dirs2[$i]}/$(basename $file2)                      
+                        rm -rf ${dirs2[$i]}/$(basename $file2)
+
+                        echo "deleting addons files about of cluster"
+                        rm -rf sites/${{ env.BRANCH_DT }}/region/values-addons/ad-$CLUSTER_TO_DELETE.yaml
+                        rm -rf sites/${{ env.BRANCH_DT }}/region/values-addons/app-$CLUSTER_TO_DELETE.yaml
 
                         echo "deleting cluster from argocd"
                         argocd cluster rm $CLUSTER_TO_DELETE -y || true
@@ -232,6 +241,10 @@ jobs:
                         python templates/cluster-addons/python-addons.py --operation delete \
                         --file sites/${{ env.BRANCH_DT }}/wavelength/addons/helm-cluster-addons/values.yaml \
                         --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
+
+                        echo "deleting addons files about of cluster"
+                        rm -rf sites/${{ env.BRANCH_DT }}/wavelength/values-addons/ad-$CLUSTER_TO_DELETE.yaml
+                        rm -rf sites/${{ env.BRANCH_DT }}/wavelength/values-addons/app-$CLUSTER_TO_DELETE.yaml
 
                         echo "deleting file about of cluster"
                         rm -rf ${dirs2[$i]}/$(basename $file2)                        
