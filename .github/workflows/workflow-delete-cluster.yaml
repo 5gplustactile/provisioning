@@ -166,9 +166,6 @@ jobs:
             
                   zone=$(ls $path_file | grep -E "/edge/|/region/|/wavelength/")
 
-                  # checking the $path_file we don't need this while (loop),
-                  # just works to check the zone of the cluster (corresponds edge, region, wavelength)
-
                   echo "$zone" | while read line ; do
                     if echo "$line" | grep -q "/edge/" ; then
                         echo "The output corresponds to edge"
@@ -176,6 +173,9 @@ jobs:
                         clusterctl get kubeconfig $CLUSTER_TO_DELETE -n $CLUSTER_TO_DELETE --kubeconfig ~/mgmt.kubeconfig > ~/$CLUSTER_TO_DELETE.kubeconfig
                         export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$CLUSTER_TO_DELETE.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
                         echo "ENDPOINT=$ENDPOINT"
+
+                        CLUSTER_TO_DELETE=${CLUSTER_TO_DELETE/edge-clusters-/}
+                        echo CLUSTER_TO_DELETE=$CLUSTER_TO_DELETE
 
                         echo "### install pip dependencies ###"
                         pip install -r templates/cluster-addons/requirements.txt
@@ -198,6 +198,9 @@ jobs:
                         export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$CLUSTER_TO_DELETE.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
                         echo "ENDPOINT=$ENDPOINT"
 
+                        CLUSTER_TO_DELETE=${CLUSTER_TO_DELETE/region-clusters-/}
+                        echo CLUSTER_TO_DELETE=$CLUSTER_TO_DELETE
+
                         echo "### install pip dependencies ###"
                         pip install -r templates/cluster-addons/requirements.txt
                         
@@ -218,6 +221,9 @@ jobs:
                         clusterctl get kubeconfig $CLUSTER_TO_DELETE -n $CLUSTER_TO_DELETE --kubeconfig ~/mgmt.kubeconfig > ~/$CLUSTER_TO_DELETE.kubeconfig
                         export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$CLUSTER_TO_DELETE.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
                         echo "ENDPOINT=$ENDPOINT"
+
+                        CLUSTER_TO_DELETE=${CLUSTER_TO_DELETE/wavelength-clusters-/}
+                        echo CLUSTER_TO_DELETE=$CLUSTER_TO_DELETE
 
                         echo "### install pip dependencies ###"
                         pip install -r templates/cluster-addons/requirements.txt
