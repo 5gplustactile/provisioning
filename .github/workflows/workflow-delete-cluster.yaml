@@ -150,7 +150,6 @@ jobs:
                 done
                 if [ "$found" = false ]; then
                   echo "File found in ${dirs2[$i]} but not in ${dirs1[$i]}: $(basename $file2)"
-                  rm -rf ${dirs2[$i]}/$(basename $file2)
 
                   echo "### login argocd ###"
                   argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} internal-argocd-https-1137655741.eu-west-3.elb.amazonaws.com --insecure
@@ -183,6 +182,9 @@ jobs:
                         --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
                         --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
 
+                        echo "deleting file about of cluster"
+                        rm -rf ${dirs2[$i]}/$(basename $file2)
+
                         echo "deleting cluster from argocd"
                         argocd cluster rm $CLUSTER_TO_DELETE -y || true
 
@@ -201,6 +203,9 @@ jobs:
                         --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
                         --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
 
+                        echo "deleting file about of cluster"
+                        rm -rf ${dirs2[$i]}/$(basename $file2)                      
+
                         echo "deleting cluster from argocd"
                         argocd cluster rm $CLUSTER_TO_DELETE -y || true
 
@@ -218,6 +223,9 @@ jobs:
                         python templates/cluster-addons/python-addons.py --operation delete \
                         --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
                         --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
+
+                        echo "deleting file about of cluster"
+                        rm -rf ${dirs2[$i]}/$(basename $file2)                        
 
                         echo "deleting cluster from argocd"
                         argocd cluster rm $CLUSTER_TO_DELETE -y || true
