@@ -158,7 +158,7 @@ jobs:
                   echo path_file=$path_file
 
                   # get the name of cluster
-                  CLUSTER_TO_DELETE=$(yq e '.clusters[].name' $path_file)
+                  CLUSTER_TO_DELETE=$(yq e '.metadata.name' $path_file | head -n 1)
                   echo CLUSTER_TO_DELETE=$CLUSTER_TO_DELETE
 
                   echo "cluster $CLUSTER_TO_DELETE is out of synced, exists in argocd but not in git provisioning repo and must be deleted from argocd"
