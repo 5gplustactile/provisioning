@@ -182,7 +182,7 @@ jobs:
                         
                         echo "### delete addons in $CLUSTER_TO_DELETE cluster placed in edge ###"
                         python templates/cluster-addons/python-addons.py --operation delete \
-                        --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
+                        --file sites/${{ env.BRANCH_DT }}/edge/values-addons/ad-$CLUSTER_TO_DELETE.yaml \
                         --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
 
                         echo "deleting file about of cluster"
@@ -203,7 +203,7 @@ jobs:
                         
                         echo "### delete addons in $CLUSTER_TO_DELETE cluster placed in edge ###"
                         python templates/cluster-addons/python-addons.py --operation delete \
-                        --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
+                        --file sites/${{ env.BRANCH_DT }}/region/addons/helm-cluster-addons/values.yaml \
                         --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
 
                         echo "deleting file about of cluster"
@@ -224,7 +224,7 @@ jobs:
                         
                         echo "### delete addons in $CLUSTER_TO_DELETE cluster placed in edge ###"
                         python templates/cluster-addons/python-addons.py --operation delete \
-                        --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
+                        --file sites/${{ env.BRANCH_DT }}/wavelength/addons/helm-cluster-addons/values.yaml \
                         --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
 
                         echo "deleting file about of cluster"
