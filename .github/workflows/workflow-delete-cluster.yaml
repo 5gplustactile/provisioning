@@ -101,7 +101,7 @@ jobs:
         - name: copy provisioning repo to temporal folder
           run: |
             echo "# temporal folder tmp_provisioning"
-            mkdir ../tmp_provsioning/
+            mkdir ../tmp_provisioning/
             cp -pr . ../tmp_provisioning/
             ls -lrt ../tmp_provisioning
  
@@ -113,19 +113,121 @@ jobs:
             fetch-depth: 0
             token: ${{ secrets.ACCESS_TOKEN }}            
           
-        - name: copy auto-ztp repo to temporal folder
+        - name: comparing provisioning and auto-ztp repositories
           run: |
-            echo "# temporal folder tmp_auto-ztp"
-            mkdir ../tmp_auto-ztp/
-            cp -pr . ../tmp_auto-ztp/
-            ls -lrt ../tmp_auto-ztp
+            #!/bin/bash
+            
+            # Directories to compare
+            dirs1=("../tmp_provisioning/${{ env.BRANCH_DT }}/edge" "provisioning/${{ env.BRANCH_DT }}/region" "provisioning/${{ env.BRANCH_DT }}/wavelength")
+            dirs2=("sites/${{ env.BRANCH_DT }}/edge/clusters" "sites/${{ env.BRANCH_DT }}/region/clusters" "sites/${{ env.BRANCH_DT }}/wavelength/clusters")
+            dirs2=("sites/${{ env.BRANCH_DT }}/edge/clusters" "sites/${{ env.BRANCH_DT }}/region/clusters" "sites/${{ env.BRANCH_DT }}/wavelength/clusters")
+            
+            # Compare file names in each pair of directories
+            for i in ${!dirs1[@]}; do
+              # Find .yaml files in the directories
+              files1=($(find ${dirs1[$i]} -name "*.yaml"))
+              files2=($(find ${dirs2[$i]} -name "*.yaml"))
+            
+              echo "Checking files in ${dirs1[$i]} and ${dirs2[$i]}"
+            
+              # Check for files in dirs1 that are also in dirs2
+              for file1 in "${files1[@]}"; do
+                for file2 in "${files2[@]}"; do
+                  if [ "$(basename $file1)" == "$(basename $file2)" ]; then
+                    echo "Same file found: $(basename $file1)"
+                  fi
+                done
+              done
+            
+              # Check for files in dirs2 that are not in dirs1
+              for file2 in "${files2[@]}"; do
+                found=false
+                for file1 in "${files1[@]}"; do
+                  if [ "$(basename $file1)" == "$(basename $file2)" ]; then
+                    found=true
+                    break
+                  fi
+                done
+                if [ "$found" = false ]; then
+                  echo "File found in ${dirs2[$i]} but not in ${dirs1[$i]}: $(basename $file2)"
+                  rm -rf ${dirs2[$i]}/$(basename $file2)
 
-        - name: list ../tmp folders
-          run: |
-            ls -lrt ../
-            echo "# . path"
-            ls -lrt
+                  echo "### login argocd ###"
+                  argocd login --username admin --password ${{ secrets.ARGOCD_PASSWORD }} internal-argocd-https-1137655741.eu-west-3.elb.amazonaws.com --insecure
 
+                  # get the name of cluster
+                  CLUSTER_TO_DELETE=$(yq e '.clusters[].name' dirs2[$i]}/$(basename $file2))
+                  echo CLUSTER_TO_DELETE=$CLUSTER_TO_DELETE
+
+                  echo "cluster $CLUSTER_TO_DELETE is out of synced, exists in argocd but not in git provisioning repo and must be deleted from argocd"
+                  echo ${{ secrets.KUBECONFIG_MASTER }} | base64 -d > ~/mgmt.kubeconfig
+
+                  path_file=${dirs2[$i]}/$(basename $file2)
+                  echo path_file=$path_file
+            
+                  zone=$(ls $path_file | grep -E "/edge/|/region/|/wavelength/")
+            
+                  echo "$zone" | while read line ; do
+                    if echo "$line" | grep -q "/edge/" ; then
+                        echo "The output corresponds to edge"
+                        
+                        clusterctl get kubeconfig edge-clusters-$CLUSTER_TO_DELETE -n edge-clusters-$CLUSTER_TO_DELETE --kubeconfig ~/mgmt.kubeconfig > ~/$CLUSTER_TO_DELETE.kubeconfig
+                        export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$CLUSTER_TO_DELETE.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                        echo "ENDPOINT=$ENDPOINT"
+
+                        echo "### install pip dependencies ###"
+                        pip install -r templates/cluster-addons/requirements.txt
+                        
+                        echo "### delete addons in $CLUSTER_TO_DELETE cluster placed in edge ###"
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
+                        --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
+
+                        echo "deleting cluster from argocd"
+                        argocd cluster rm $CLUSTER_TO_DELETE -y || true
+
+                    elif echo "$line" | grep -q "/region/" ; then
+                        echo "The output corresponds to region"
+
+                        clusterctl get kubeconfig region-clusters-$CLUSTER_TO_DELETE -n region-clusters-$CLUSTER_TO_DELETE --kubeconfig ~/mgmt.kubeconfig > ~/$CLUSTER_TO_DELETE.kubeconfig
+                        export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$CLUSTER_TO_DELETE.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                        echo "ENDPOINT=$ENDPOINT"
+
+                        echo "### install pip dependencies ###"
+                        pip install -r templates/cluster-addons/requirements.txt
+                        
+                        echo "### delete addons in $CLUSTER_TO_DELETE cluster placed in edge ###"
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
+                        --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
+
+                        echo "deleting cluster from argocd"
+                        argocd cluster rm $CLUSTER_TO_DELETE -y || true
+
+                    elif echo "$line" | grep -q "/wavelength/" ; then
+                        echo "The output corresponds to wavelength"
+
+                        clusterctl get kubeconfig wavelength-clusters-$CLUSTER_TO_DELETE -n wavelength-clusters-$CLUSTER_TO_DELETE --kubeconfig ~/mgmt.kubeconfig > ~/$CLUSTER_TO_DELETE.kubeconfig
+                        export ENDPOINT="$(kubectl cluster-info --kubeconfig ~/$CLUSTER_TO_DELETE.kubeconfig | awk '{print $NF}' | head -1 | sed -r "s/\x1B\[([0-9]{1,3}(;[0-9]{1,2};?)?)?[mGK]//g")"
+                        echo "ENDPOINT=$ENDPOINT"
+
+                        echo "### install pip dependencies ###"
+                        pip install -r templates/cluster-addons/requirements.txt
+                        
+                        echo "### delete addons in $CLUSTER_TO_DELETE cluster placed in edge ###"
+                        python templates/cluster-addons/python-addons.py --operation delete \
+                        --file sites/${{ env.BRANCH_DT }}/edge/addons/helm-cluster-addons/values.yaml \
+                        --server "{ \"name\": \"$CLUSTER_TO_DELETE\", \"url\": \"$ENDPOINT\" }" --project addons
+
+                        echo "deleting cluster from argocd"
+                        argocd cluster rm $CLUSTER_TO_DELETE -y || true
+
+                    fi
+                  done
+
+                fi
+              done
+            done
 
 
 #        - name: name clusters all regions in ${{ env.BRANCH_DT }} workspace
@@ -350,16 +452,16 @@ jobs:
 #              done
 #            fi
   
-#        - name: commit changes in 5gplustactile/auto-ztp repository
-#          run: |
-#           git config --local user.email "action@github.com"
-#           git config --local user.name "GitHub Action"  
-#           git add .
-#           git commit -a -m "${{ env.CI_COMMIT_MESSAGE }}" --allow-empty
-#  
-#        - name: push changes in 5gplustactile/auto-ztp repository
-#          uses: ad-m/github-push-action@master
-#          with:
-#            branch: main
-#            repository: '5gplustactile/auto-ztp'
-#            github_token: ${{ secrets.ACCESS_TOKEN }}
+        - name: commit changes in 5gplustactile/auto-ztp repository
+          run: |
+           git config --local user.email "action@github.com"
+           git config --local user.name "GitHub Action"  
+           git add .
+           git commit -a -m "${{ env.CI_COMMIT_MESSAGE }}" --allow-empty
+  
+        - name: push changes in 5gplustactile/auto-ztp repository
+          uses: ad-m/github-push-action@master
+          with:
+            branch: main
+            repository: '5gplustactile/auto-ztp'
+            github_token: ${{ secrets.ACCESS_TOKEN }}
