@@ -258,7 +258,9 @@ jobs:
                 fi
               done
             done
-
+            
+            echo "deleting ../tmp_provisioning folder"
+            rm -rf ../tmp_provisioning
 
 #        - name: name clusters all regions in ${{ env.BRANCH_DT }} workspace
 #          run: |
