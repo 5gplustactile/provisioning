@@ -7,7 +7,7 @@ on:
 jobs:
     cluster:
         if: github.event.review.state == 'approved'
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-approval.yaml@cicd
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-approval.yaml@pipelines
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
