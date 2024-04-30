@@ -7,12 +7,12 @@ on:
 jobs:
 
     infrastructure_vulnerability_scanning:
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-terrascan-tf.yaml@cicd
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-terrascan-tf.yaml@pipelines
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
 
     iac:
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-aws.yaml@cicd
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-iac-aws.yaml@pipelines
         needs: infrastructure_vulnerability_scanning
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
@@ -24,7 +24,7 @@ jobs:
     
     cluster_as_code:
         needs: iac
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-cluster.yaml@cicd
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-cluster.yaml@pipelines
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
             ARGOCD_HOSTNAME: ${{ secrets.ARGOCD_HOSTNAME }}
@@ -33,6 +33,6 @@ jobs:
 
     cluster_vulnerability_scanning:
         needs: cluster_as_code
-        uses: 5gplustactile/provisioning/.github/workflows/workflow-terrascan-k8s.yaml@cicd
+        uses: 5gplustactile/provisioning/.github/workflows/workflow-terrascan-k8s.yaml@pipelines
         secrets:
             ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
