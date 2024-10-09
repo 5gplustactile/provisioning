@@ -117,13 +117,13 @@ jobs:
           working-directory: ./${{ secrets.OPS_AWS_REGION }}/iac/${{ env.BRANCH }}/subnets
 
         - name: Upload outpost_subnet_ids.json
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: outpost_subnet_ids
             path: /tmp/outpost_subnet_ids.json
         
         - name: Upload private_subnet_ids.json
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: private_subnet_ids
             path: /tmp/private_subnet_ids.json
@@ -137,7 +137,7 @@ jobs:
             token: ${{ secrets.ACCESS_TOKEN }}
 
         - name: Upload subnets-output.py
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: subnets-output
             path: templates/scripts/subnets-output.py
@@ -151,17 +151,17 @@ jobs:
             token: ${{ secrets.ACCESS_TOKEN }}
 
         - name: Download outpost_subnet_ids.json
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
           with:
             name: outpost_subnet_ids
 
         - name: Download private_subnet_ids.json
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
           with:
             name: private_subnet_ids
 
         - name: Download subnets-output.py
-          uses: actions/download-artifact@v2
+          uses: actions/download-artifact@v4
           with:
             name: subnets-output
 

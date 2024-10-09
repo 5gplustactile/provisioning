@@ -231,7 +231,7 @@ jobs:
 
           - name: Upload clusters-region.output
             if: env.file_region_is_null == 'false'
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v4
             env:
               ENVIRON: region
             with:
@@ -240,7 +240,7 @@ jobs:
 
           - name: Upload clusters-edge.output
             if: env.file_edge_is_null == 'false'
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v4
             env:
               ENVIRON: edge
             with:
@@ -249,7 +249,7 @@ jobs:
 
           - name: Upload clusters-wavelength.output
             if: env.file_wavelength_is_null == 'false'
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v4
             env:
               ENVIRON: wavelength
             with:
@@ -266,7 +266,7 @@ jobs:
   
           - name: Download clusters-region.output
             if: env.file_region_is_null == 'false'
-            uses: actions/download-artifact@v2
+            uses: actions/download-artifact@v4
             env:
               ENVIRON: region
             with:
@@ -274,7 +274,7 @@ jobs:
 
           - name: Download clusters-edge.output
             if: env.file_edge_is_null == 'false'
-            uses: actions/download-artifact@v2
+            uses: actions/download-artifact@v4
             env:
               ENVIRON: edge
             with:
@@ -282,7 +282,7 @@ jobs:
 
           - name: Download clusters-wavelength.output
             if: env.file_wavelength_is_null == 'false'
-            uses: actions/download-artifact@v2
+            uses: actions/download-artifact@v4
             env:
               ENVIRON: wavelength
             with:
