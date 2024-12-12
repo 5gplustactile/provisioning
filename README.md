@@ -1,63 +1,65 @@
-# provisioning
-This repo is aimed to provide cluster as a service
+# Provisioning
 
-## Procedure
-**Creating cluster DT:**
+Este repositorio está diseñado para proporcionar clústeres como servicio, facilitando la creación, despliegue y eliminación de clústeres en diferentes zonas (edge, region, wavelength).
 
-1. Go to provisioning repo and creates the workspace to the DT: 
-  Folders and zones (edge, region, wavelength) and each one 
-  with the ```NAME_CLUSTER.yaml``` file
+## Procedimiento
 
-    1.1. Modify the ```NAME_CLUSTER.yaml``` file to creates clusters
+### **Creación de un clúster Gemelo Digital (DT - Siglas en ingles)**
 
-    1.2. ```clusters["name"]  = NAME_CLUSTER and NAME_CLUSTER.yaml ``` file must be the same
+1. **Preparación en el repositorio de `provisioning`**:
+   - Navega al repositorio de `provisioning` y crea el espacio de trabajo para el DT en las carpetas correspondientes a las zonas (`edge`, `region`, `wavelength`).
+   - Crea el archivo `NAME_CLUSTER.yaml` en la zona seleccionada.
+     - Modifica el archivo `NAME_CLUSTER.yaml` con los parámetros necesarios para el clúster.
+     - Asegúrate de que el valor de `clusters["name"]` coincide con el nombre del archivo `NAME_CLUSTER.yaml`.
 
-2. Go to the auto-ztp repo and creates the
-   workspace to the DT: Folders and zones (edge,
-    region, wavelength) and each other with the 
-    content as digital-twins-example folder and
-    push the changes
+2. **Preparación en el repositorio de `auto-ztp`**:
+   - Crea el espacio de trabajo correspondiente al DT, organizando las carpetas por zonas (`edge`, `region`, `wavelength`).
+   - Copia el contenido de la carpeta `digital-twins-example` como base.
+   - Realiza un push con los cambios.
 
-3. Go to the ```iac-terragrunt``` repo
-    and creates the workspace to the DT. Call the 
-    subnets module tf and configure the terragrunt.hcl.
-    to each cluster and push the changes
+3. **Configuración en el repositorio de `iac-terragrunt`**:
+   - Crea el espacio de trabajo para el DT.
+   - Configura el módulo `subnets` en Terraform dentro del archivo `terragrunt.hcl` para cada clúster.
+   - Realiza un push con los cambios.
 
-4. Return to the provisioning repo and push the changes the 
-    ```dt/NAME_DT``` branch
+4. **Regreso al repositorio de `provisioning`**:
+   - Realiza un push de los cambios en la rama `dt/NAME_DT`.
 
-5. When push branch. Wait a few seconds. Wait until the 
-    GitHub Actions has been finished. 
+5. **Despliegue del clúster**:
+   - Una vez que los cambios han sido subidos, espera a que las acciones de GitHub (GitHub Actions) finalicen.
+   - Accede a la interfaz de ArgoCD, filtra por el proyecto `clusters` y verifica que el clúster se sincronice automáticamente y se esté desplegando.
 
-    5.1 Go to the argocd GUI, filter for project clusters and you will see 
-        the cluster ir synced automatically and it's deploying. Wait ultil the
-        cluster is deployed
+6. **Creación de un clúster en `edge` (adicional)**:
+   - Ve al espacio de trabajo del DT en el repositorio de `iac-terragrunt`.
+   - Llama al módulo `eni-lni` en Terraform desde el archivo `terragrunt.hcl`.
+   - Verifica los IDs de las instancias EC2 del clúster en la consola de AWS.
+   - Realiza un pull de los cambios en la rama principal.
 
-6. If the intention is to create a cluster in edge. 
-    
-    6.1 Go to the ```iac-terragrunt``` in the workspace
-    of the DT. 
-    
-    6.2 Call a ```eni-lni``` tf module with the terragrunt.hcl file.
-    Go to the console AWS and check the id of each EC2 of the cluster
+7. **Finalización**:
+   - Regresa al repositorio de `provisioning` y aprueba/mergea los cambios a la rama principal.
+   - El clúster estará listo para ser utilizado.
 
-    6.3 Pull the changes in the main branch
+### **Eliminación de un clúster DT**
 
-7. Go to the provisioning repo. Approve and merge the changes to main
-    The cluster(s) is ready to work
+1. **Preparación en el repositorio de `provisioning`**:
+   - Elimina el archivo correspondiente al nombre del clúster (por ejemplo, `telefonica/edge/telefonica.yaml`).
+   - Realiza un push de los cambios en la rama `dt/NAME_DT`.
+   - Espera a que todas las acciones de GitHub (GitHub Actions) finalicen correctamente.
 
-**Deleting Cluster DT:**
+2. **Eliminación de parámetros en `iac-terragrunt`**:
+   - Si el clúster está en `edge`, elimina los parámetros relacionados en el archivo `eni-lni/terragrunt.hcl`.
+   - Para otros clústeres, elimina los parámetros correspondientes en `subnets/terragrunt.hcl`.
+   - Realiza un push de los cambios en la rama principal.
 
-1. Go to provisioning repo and delete the file regarding to the name cluster 
-   (```ex: telefonica/edge/telefonica.yaml```) and push the changes in ```dt/NAME_DT.```
-    1.1 Wait until all actions jobs in the pull requests has been successfully finished
+3. **Finalización**:
+   - Regresa al repositorio de `provisioning` y mergea los cambios a la rama principal.
+   - El clúster será eliminado automáticamente.
 
-2. If cluster in edge. Go to the ```iac-terragrunt``` and repo delete the related 
-    parameters of the cluster in ```eni-lni/terragrunt.hcl``` and push the changes in main
+---
 
-3. Go to the provisioning repo and in the Pull Request merge the changes to main
-    the cluster will be deleted automatically
+## Descripción de carpetas principales
 
-2. Go to the ```iac-terragrunt``` repo and delete the related 
-    parameters of the cluster in ```subnets/terragrunt.hcl``` and push the changes in main
-    
+- **`demo`**: Ejemplos básicos para `edge`, `region` y `wavelength`.
+- **`examples`**: Casos de uso específicos, como `digital-twins`, con ejemplos para las zonas `edge`, `region` y `wavelength`.
+- **`opentwins`**: Configuraciones específicas para proyectos de OpenTwins, organizadas por zona.
+- **`telefonica`**: Configuraciones específicas para proyectos internos de Telefónica, organizadas por zona.
