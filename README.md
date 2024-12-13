@@ -63,3 +63,7 @@ Este repositorio está diseñado para proporcionar clústeres como servicio, fac
 - **`examples`**: Casos de uso específicos, como `digital-twins`, con ejemplos para las zonas `edge`, `region` y `wavelength`.
 - **`opentwins`**: Configuraciones específicas para proyectos de OpenTwins, organizadas por zona.
 - **`telefonica`**: Configuraciones específicas para proyectos internos de Telefónica, organizadas por zona.
+
+## Licencia
+
+Este projecto es licenciado bajo [Apache](LICENSE)
